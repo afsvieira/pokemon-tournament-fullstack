@@ -82,7 +82,8 @@ public class TournamentService : ITournamentService
                 Id = pokemonDetails.Id,
                 Name = Capitalize(pokemonDetails.Name),
                 Type = primaryType,
-                BaseExperience = pokemonDetails.Base_Experience
+                BaseExperience = pokemonDetails.Base_Experience,
+                ImageUrl = pokemonDetails.Sprites.Front_Default
             });
         }
 

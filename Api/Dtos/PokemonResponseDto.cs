@@ -9,6 +9,7 @@ public class PokemonResponseDto
     public string Name { get; set; } = string.Empty;
     public int Base_Experience { get; set; }
     public IEnumerable<TypeSlot> Types { get; set; } = new List<TypeSlot>();
+    public Sprites Sprites { get; set; } = new();
 }
 
 /// <summary>
@@ -27,4 +28,12 @@ public class TypeDetail
 {
     public string Name { get; set; } = string.Empty;
     public string Url { get; set; } = string.Empty;
+}
+
+/// <summary>
+/// Contains Pokemon sprite URLs from the PokeAPI.
+/// </summary>
+public class Sprites
+{
+    public string? Front_Default { get; set; }
 }
