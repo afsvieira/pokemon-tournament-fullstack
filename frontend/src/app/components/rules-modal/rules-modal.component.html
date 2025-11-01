@@ -1,0 +1,132 @@
+<!-- Tournament Rules Modal - displays game mechanics and battle rules -->
+@if (isVisible) {
+<div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (click)="close()">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+    <div class="modal-content bg-dark border-secondary" style="border-radius: 16px">
+      <!-- Modal header with title and close button -->
+      <div class="modal-header bg-dark border-secondary">
+        <h2 class="modal-title text-light">
+          <i class="fas fa-scroll fs-3 me-2 text-info"></i>
+          Tournament Rules
+        </h2>
+        <button class="btn-close btn-close-white" (click)="close()" aria-label="Close"></button>
+      </div>
+
+      <!-- Modal content sections -->
+      <div class="modal-body bg-dark text-light">
+      <!-- Battle mechanics section -->
+      <div class="mb-4 pb-3 border-bottom">
+        <h3 class="h5 d-flex align-items-center mb-3">
+          <i class="fas fa-hammer fs-4 me-3 flex-shrink-0 text-warning"></i>
+          How Battles Work
+        </h3>
+        <p>
+          Each Pokémon battles against all other Pokémon in the tournament in 1v1 matches.
+          The outcome is determined by type advantages and base experience.
+        </p>
+      </div>
+
+      <!-- Type matchups section with dynamic data -->
+      <div class="mb-4 pb-3 border-bottom">
+        <h3 class="h5 d-flex align-items-center mb-3">
+          <i class="fas fa-bolt fs-4 me-3 flex-shrink-0 text-warning"></i>
+          Type Matchups
+        </h3>
+        <p>
+          Battles are decided by type advantages following these rules:
+        </p>
+        <!-- Responsive grid for type matchups -->
+        <div class="row g-3 mt-3">
+          @for (matchup of typeMatchups; track matchup.attacker) {
+            <div class="col-lg-6">
+              <!-- Matchup card with hover effect -->
+              <div class="matchup-item card p-3">
+                <div class="d-flex align-items-center">
+                  <i class="fas {{ matchup.attackerIcon }} {{ matchup.attackerClass }} fs-5 me-2"></i>
+                  <span class="fw-semibold me-2">{{ matchup.attacker }}</span>
+                  <i class="fas fa-arrow-right fs-6 mx-2 text-muted"></i>
+                  <span class="fst-italic small me-2 text-muted">beats</span>
+                  <i class="fas {{ matchup.defenderIcon }} {{ matchup.defenderClass }} fs-5 me-2"></i>
+                  <span class="fw-semibold">{{ matchup.defender }}</span>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Tie-breaking rules section -->
+      <div class="mb-4 pb-3 border-bottom">
+        <h3 class="h5 d-flex align-items-center mb-3">
+          <i class="fas fa-balance-scale fs-4 me-3 flex-shrink-0 text-warning"></i>
+          Tie-Breaking Rules
+        </h3>
+        <p>
+          If the type matchup does not determine a winner:
+        </p>
+        <ul>
+          <li>The Pokémon with the <strong>higher base experience</strong> wins.</li>
+          <li>If base experience is equal, the battle is considered a <strong>tie</strong>.</li>
+        </ul>
+      </div>
+
+      <!-- Battle outcomes section with visual cards -->
+      <div class="mb-4 pb-3 border-bottom">
+        <h3 class="h5 d-flex align-items-center mb-3">
+          <i class="fas fa-trophy fs-4 me-3 flex-shrink-0 text-warning"></i>
+          Battle Outcomes
+        </h3>
+        <!-- Equal height cards for different outcomes -->
+        <div class="row g-3 mt-3">
+          <div class="col-md-4">
+            <div class="outcome-card card border-success p-4 text-center h-100 d-flex flex-column">
+              <i class="fas fa-crown fs-1 mb-3 text-success"></i>
+              <h6 class="fw-semibold mb-2">Win</h6>
+              <p class="small mb-0 flex-grow-1">Type advantage or higher base experience</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="outcome-card card border-danger p-4 text-center h-100 d-flex flex-column">
+              <i class="fas fa-skull fs-1 mb-3 text-danger"></i>
+              <h6 class="fw-semibold mb-2">Loss</h6>
+              <p class="small mb-0 flex-grow-1">Type disadvantage or lower base experience</p>
+            </div>
+          </div>
+          <div class="col-md-4">
+            <div class="outcome-card card border-secondary p-4 text-center h-100 d-flex flex-column">
+              <i class="fas fa-handshake fs-1 mb-3 text-secondary"></i>
+              <h6 class="fw-semibold mb-2">Tie</h6>
+              <p class="small mb-0 flex-grow-1">No type matchup and equal base experience</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Win rate calculation section -->
+      <div>
+        <h3 class="h5 d-flex align-items-center mb-3">
+          <i class="fas fa-percentage fs-4 me-3 flex-shrink-0 text-warning"></i>
+          Win Rate
+        </h3>
+        <p>
+          Win rate is calculated by dividing wins by total battles:
+        </p>
+        <div class="card p-3 my-3">
+          <code class="fw-semibold">
+            Win Rate = (Wins ÷ Total Battles) × 100%
+          </code>
+        </div>
+      </div>
+      </div>
+
+      <!-- Modal footer with close button -->
+      <div class="modal-footer bg-dark border-secondary justify-content-center">
+        <button class="btn btn-primary" (click)="close()">
+          <i class="fas fa-check me-2"></i>
+          Got it!
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+}

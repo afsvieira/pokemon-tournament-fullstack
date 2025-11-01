@@ -1,0 +1,81 @@
+<!-- Tournament Header -->
+<div class="row mb-4">
+  <div class="col-12 text-center">
+    <h1 class="display-4 mb-3">Pokémon Tournament</h1>
+    <p class="lead text-muted">Battle simulation with 16 random Pokémon from Kanto region</p>
+  </div>
+</div>
+
+<!-- Generate Tournament Button -->
+<div class="row mb-4">
+  <div class="col-12 text-center">
+    <button
+      type="button"
+      class="btn btn-primary btn-lg px-5"
+      [disabled]="isLoading"
+      (click)="generateTournament()">
+
+      @if(isLoading){
+        <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+        Generating...
+      }
+      @else if(pokemonList.length > 0){
+        <i class="bi bi-arrow-clockwise me-2"></i>
+        Generate New Tournament
+      }
+      @else{
+        <i class="bi bi-lightning-charge me-2"></i>
+        Generate Tournament Statistics
+      }
+    </button>
+  </div>
+</div>
+
+<!-- Sort Controls -->
+<app-sort-controls
+  [currentSortBy]="currentSortBy"
+  [currentSortDirection]="currentSortDirection"
+  (sortChange)="onSortChange($event)">
+</app-sort-controls>
+
+<!-- Rules Button (appears after pokemon are generated) -->
+@if(pokemonList.length > 0){
+  <div class="row mb-3">
+    <div class="col-12 text-end">
+      <button
+        type="button"
+        class="btn btn-link btn-rules"
+        (click)="openRulesModal()">
+        <i class="fas fa-question-circle"></i>
+        How do battles work?
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Pokemon Cards Container -->
+<div class="row" id="pokemon-cards">
+  <div class="col-12">
+    <div class="row g-3">
+
+      @if(!pokemonList.length){
+        <div class="col-12 text-center text-muted">
+          <i class="bi bi-trophy fs-1 mb-3 d-block"></i>
+          <p class="fs-5">Ready to start your Pokémon tournament?</p>
+          <p class="text-muted">Click the button above to generate battle statistics!</p>
+        </div>
+      }
+      @else{
+        @for(pokemon of pokemonList; track pokemon.id){
+          <div class="col-lg-3 col-md-4 col-sm-6">
+            <app-pokemon-card [pokemon]="pokemon"></app-pokemon-card>
+          </div>
+        }
+      }
+
+    </div>
+  </div>
+</div>
+
+<!-- Rules Modal -->
+<app-rules-modal></app-rules-modal>

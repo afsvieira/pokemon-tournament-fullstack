@@ -1,0 +1,30 @@
+<!-- Sort Controls - allows users to sort Pokemon list by different criteria -->
+<div class="d-flex justify-content-center align-items-center gap-3 mb-4">
+  <!-- Sort label with icon -->
+  <span class="fw-bold text-muted">
+    <i class="fas fa-filter me-2 text-secondary"></i>
+    Sort by:
+  </span>
+
+  <!-- Sort field dropdown -->
+  <select class="form-select bg-dark text-light border-secondary sort-select"
+          style="width: auto"
+          [value]="currentSortBy"
+          (change)="onSortByChange($event)">
+    <option value="wins">Wins</option>
+    <option value="losses">Losses</option>
+    <option value="ties">Ties</option>
+    <option value="name">Name</option>
+    <option value="id">ID</option>
+  </select>
+
+  <!-- Sort direction toggle button -->
+  <button type="button"
+          class="btn btn-outline-secondary sort-direction-btn"
+          (click)="toggleSortDirection()"
+          [title]="currentSortDirection === 'asc' ? 'Ascending' : 'Descending'">
+    <i class="fas me-2"
+       [ngClass]="currentSortDirection === 'asc' ? 'fa-arrow-up-short-wide' : 'fa-arrow-down-wide-short'"></i>
+    {{ currentSortDirection === 'asc' ? 'Asc' : 'Desc' }}
+  </button>
+</div>

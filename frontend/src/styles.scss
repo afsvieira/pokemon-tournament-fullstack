@@ -1,0 +1,62 @@
+/* Global styles - Bootstrap + Font Awesome + minimal custom styles */
+@import 'bootstrap/dist/css/bootstrap.min.css';
+@import '@fortawesome/fontawesome-free/css/all.min.css';
+
+// Dark theme background
+body {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  min-height: 100vh;
+  color: #f1f5f9;
+}
+
+// Container spacing
+.container, .container-fluid {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+// Custom scrollbar styling
+*::-webkit-scrollbar {
+  width: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+  border-radius: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.5);
+  border-radius: 8px;
+  
+  &:hover {
+    background: rgba(100, 116, 139, 0.7);
+  }
+}
+
+// Pokemon type colors for icons
+.fa-fire { color: #ff7402; }
+.fa-droplet { color: #3b9dff; }
+.fa-leaf { color: #3fa129; }
+.fa-bolt { color: #fac000; }
+.fa-brain { color: #ff5ca1; }
+.fa-hand-fist { color: #e0306a; }
+.fa-moon { color: #5b5466; }
+.fa-ghost { color: #8e4f9e; }
+.fa-circle { color: #a8a878; }
+.fa-feather { color: #a890f0; }
+.fa-skull-crossbones { color: #a040a0; }
+.fa-mountain { color: #e0c068; }
+.fa-gem { color: #b8a038; }
+.fa-bug { color: #a8b820; }
+.fa-gears { color: #b8b8d0; }
+.fa-snowflake { color: #98d8d8; }
+.fa-dragon { color: #7038f8; }
+.fa-wand-sparkles { color: #ee99ac; }
+.fa-question { color: #68a090; }
+
+// Bootstrap modal customization for dark theme
+.modal-content {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
