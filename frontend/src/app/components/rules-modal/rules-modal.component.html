@@ -2,18 +2,18 @@
 @if (isVisible) {
 <div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (click)="close()">
   <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
-    <div class="modal-content bg-dark border-secondary" style="border-radius: 16px">
+    <div class="modal-content border-secondary" style="border-radius: 16px">
       <!-- Modal header with title and close button -->
-      <div class="modal-header bg-dark border-secondary">
-        <h2 class="modal-title text-light">
+      <div class="modal-header border-secondary">
+        <h2 class="modal-title">
           <i class="fas fa-scroll fs-3 me-2 text-info"></i>
           Tournament Rules
         </h2>
-        <button class="btn-close btn-close-white" (click)="close()" aria-label="Close"></button>
+        <button class="btn-close" (click)="close()" aria-label="Close"></button>
       </div>
 
       <!-- Modal content sections -->
-      <div class="modal-body bg-dark text-light">
+      <div class="modal-body">
       <!-- Battle mechanics section -->
       <div class="mb-4 pb-3 border-bottom">
         <h3 class="h5 d-flex align-items-center mb-3">
@@ -120,7 +120,7 @@
       </div>
 
       <!-- Modal footer with close button -->
-      <div class="modal-footer bg-dark border-secondary justify-content-center">
+      <div class="modal-footer border-secondary justify-content-center">
         <button class="btn btn-primary" (click)="close()">
           <i class="fas fa-check me-2"></i>
           Got it!

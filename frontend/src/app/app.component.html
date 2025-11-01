@@ -1,4 +1,20 @@
 <!-- Pokemon Tournament Application -->
-<div class="container mt-4" data-bs-theme="dark">
+<div class="container mt-4">
+  <!-- Theme Toggle Button -->
+  <div class="position-fixed top-0 end-0 p-3" style="z-index: 1000">
+    <button 
+      class="btn btn-outline-secondary btn-sm rounded-pill"
+      (click)="toggleTheme()"
+      [title]="isDarkTheme ? 'Switch to Light Theme' : 'Switch to Dark Theme'">
+      @if (isDarkTheme) {
+        <i class="fas fa-sun me-1"></i>
+        Light
+      } @else {
+        <i class="fas fa-moon me-1"></i>
+        Dark
+      }
+    </button>
+  </div>
+  
   <router-outlet />
 </div>

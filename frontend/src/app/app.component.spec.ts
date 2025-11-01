@@ -32,14 +32,38 @@ describe('AppComponent', () => {
   });
 
   /**
-   * Tests that app renders with Bootstrap dark theme.
+   * Tests that app renders with Bootstrap dark theme by default.
    */
-  it('should render with dark theme container', () => {
+  it('should render with dark theme by default', () => {
     const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
     fixture.detectChanges();
+    
+    expect(app.isDarkTheme).toBeTrue();
+    expect(document.body.getAttribute('data-bs-theme')).toBe('dark');
+  });
+
+  /**
+   * Tests theme toggle functionality.
+   */
+  it('should toggle theme when button is clicked', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    fixture.detectChanges();
+    
     const compiled = fixture.nativeElement as HTMLElement;
-    const container = compiled.querySelector('.container');
-    expect(container).toBeTruthy();
-    expect(container?.getAttribute('data-bs-theme')).toBe('dark');
+    const toggleButton = compiled.querySelector('button');
+    
+    // Initial state should be dark
+    expect(app.isDarkTheme).toBeTrue();
+    expect(document.body.getAttribute('data-bs-theme')).toBe('dark');
+    
+    // Click toggle button
+    toggleButton?.click();
+    fixture.detectChanges();
+    
+    // Should switch to light theme
+    expect(app.isDarkTheme).toBeFalse();
+    expect(document.body.getAttribute('data-bs-theme')).toBe('light');
   });
 });

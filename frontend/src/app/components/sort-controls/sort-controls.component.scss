@@ -1,4 +1,8 @@
-// Sort Controls - only unique translateY effect not available in Bootstrap
+// Sort Controls - hover effects only
 .sort-direction-btn:hover {
   transform: translateY(-1px);
+}
+
+.sort-select {
+  transition: all 0.2s ease;
 }

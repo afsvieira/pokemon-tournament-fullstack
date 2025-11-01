@@ -2,11 +2,22 @@
 @import 'bootstrap/dist/css/bootstrap.min.css';
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
-// Dark theme background
+// Theme styles applied to body
 body {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+// Dark theme
+body[data-bs-theme="dark"] {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   color: #f1f5f9;
+}
+
+// Light theme
+body[data-bs-theme="light"] {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  color: #212529;
 }
 
 // Container spacing

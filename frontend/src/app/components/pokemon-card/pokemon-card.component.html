@@ -1,6 +1,6 @@
 <!-- Pokemon Card - displays Pokemon stats and battle information -->
-<div class="card bg-dark border-secondary h-100 d-flex flex-column pokemon-card"
-     style="min-height: 400px; border-width: 5px; border-radius: 16px; transition: all 0.3s ease">
+<div class="card border-secondary h-100 d-flex flex-column pokemon-card"
+     style="min-height: 400px; border-width: 3px; border-radius: 16px; transition: all 0.3s ease">
 
   <!-- Card header with type icon and Pokemon info -->
   <div class="card-header bg-transparent border-0 pb-2">
@@ -13,7 +13,7 @@
               data-bs-toggle="tooltip">
           <i [ngClass]="getTypeIcon(pokemon.type)" [class]="'pokemon-type-' + pokemon.type"></i>
         </span>
-        <span class="fw-bold fs-5 text-light text-capitalize">{{ pokemon.name }}</span>
+        <span class="fw-bold fs-5 text-capitalize">{{ pokemon.name }}</span>
       </div>
       <span class="text-muted fw-semibold" style="font-family: 'Courier New', monospace">
         #{{ pokemon.id.toString().padStart(3, '0') }}
@@ -25,8 +25,8 @@
   <div class="card-body pt-0">
     <!-- Pokemon image section -->
     <div class="text-center mb-3">
-      <div class="d-flex align-items-center justify-content-center mx-auto bg-dark border border-secondary rounded-3"
-           style="width: 130px; height: 130px; box-shadow: inset 0 2px 4px rgba(255,255,255,0.05)">
+      <div class="d-flex align-items-center justify-content-center mx-auto border border-secondary rounded-3"
+           style="width: 130px; height: 130px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.1)">
         @if (pokemon.imageUrl) {
           <img [src]="pokemon.imageUrl" 
                [alt]="pokemon.name"

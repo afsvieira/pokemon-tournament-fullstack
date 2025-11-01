@@ -24,13 +24,52 @@
 
 // Stat cards styling and hover effect
 .stat-card {
-  background: rgba(15, 23, 42, 0.6) !important;
   backdrop-filter: blur(10px);
   transition: all 0.2s ease;
 
   &:hover {
-    background: rgba(15, 23, 42, 0.8) !important;
     border-color: rgba(100, 116, 139, 0.8) !important;
+  }
+}
+
+// Dark theme stat cards
+[data-bs-theme="dark"] .stat-card {
+  background: rgba(15, 23, 42, 0.6) !important;
+
+  &:hover {
+    background: rgba(15, 23, 42, 0.8) !important;
+  }
+}
+
+// Light theme stat cards
+[data-bs-theme="light"] .stat-card {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border-color: rgba(0, 0, 0, 0.3) !important;
+  }
+
+  // Better contrast for ties in light theme
+  &.border-secondary {
+    border-color: rgba(108, 117, 125, 0.5) !important;
+    
+    .text-secondary {
+      color: #495057 !important;
+    }
+  }
+}
+
+// Light theme pokemon card improvements
+[data-bs-theme="light"] .pokemon-card {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border-color: rgba(0, 0, 0, 0.2) !important;
+  
+  // Image container in light theme
+  .border-secondary {
+    background: rgba(248, 249, 250, 0.8) !important;
+    border-color: rgba(0, 0, 0, 0.2) !important;
   }
 }
 

@@ -31,7 +31,6 @@
 .btn-rules {
   background: transparent;
   border: none;
-  color: #94a3b8;
   font-size: 0.875rem;
   font-weight: 500;
   text-decoration: none;
@@ -47,12 +46,20 @@
   }
 
   &:hover {
-    color: #cbd5e1;
     text-decoration: none;
 
     i {
       transform: scale(1.1);
     }
+  }
+}
+
+// Dark theme rules button
+[data-bs-theme="dark"] .btn-rules {
+  color: #94a3b8;
+
+  &:hover {
+    color: #cbd5e1;
   }
 
   &:active {
@@ -60,7 +67,24 @@
   }
 }
 
-// Empty state icon color
-.bi-trophy {
+// Light theme rules button
+[data-bs-theme="light"] .btn-rules {
+  color: #64748b;
+
+  &:hover {
+    color: #475569;
+  }
+
+  &:active {
+    color: #334155;
+  }
+}
+
+// Empty state icon - theme responsive
+[data-bs-theme="dark"] .bi-trophy {
   color: #475569;
+}
+
+[data-bs-theme="light"] .bi-trophy {
+  color: #94a3b8;
 }

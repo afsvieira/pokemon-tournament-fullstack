@@ -5,3 +5,21 @@
 .outcome-card:hover {
   transform: translateY(-4px);
 }
+
+// Light theme improvements for modal cards
+[data-bs-theme="light"] {
+  .matchup-item {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(0, 0, 0, 0.1) !important;
+  }
+  
+  .outcome-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    
+    &.border-secondary {
+      .text-secondary {
+        color: #495057 !important;
+      }
+    }
+  }
+}
