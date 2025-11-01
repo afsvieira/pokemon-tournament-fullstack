@@ -18,8 +18,7 @@ public class PokemonResponseDto
 public class TypeSlot
 {
     public int Slot { get; set; }
-    public TypeDetail Type { get; set; }
-
+    public required TypeDetail Type { get; set; }
 }
 /// <summary>
 /// Contains the type's name and reference URL from the PokeAPI.

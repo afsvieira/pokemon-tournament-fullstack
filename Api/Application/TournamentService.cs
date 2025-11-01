@@ -72,6 +72,8 @@ public class TournamentService : ITournamentService
         {
             // Fetch Pokémon details from the API
             var pokemonDetails = await _httpClient.GetFromJsonAsync<PokemonResponseDto>($"{id}");
+            
+            if (pokemonDetails == null) continue;
 
             // Use the primary type (slot = 1)
             var primaryType = pokemonDetails.Types.FirstOrDefault(t => t.Slot == 1)?.Type.Name ?? "unknown";
