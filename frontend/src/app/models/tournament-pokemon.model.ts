@@ -5,6 +5,7 @@ export interface TournamentPokemon {
   name: string;
   type: string;
   baseExperience: number;
+  imageUrl?: string;
   wins: number;
   losses: number;
   ties: number;
