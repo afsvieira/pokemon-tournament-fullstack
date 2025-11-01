@@ -20,6 +20,8 @@ export class TournamentComponent {
   isLoading = false;
   currentSortBy: SortBy = 'wins';
   currentSortDirection: SortDirection = 'desc';
+  errorMessage = '';
+  showErrorToast = false;
 
   constructor(private tournamentService: TournamentService) {}
 
@@ -46,6 +48,7 @@ export class TournamentComponent {
         error: (error) => {
           console.error('Error generating tournament:', error);
           this.isLoading = false;
+          this.showErrorMessage(this.getErrorMessage(error));
         }
       });
   }
@@ -86,5 +89,45 @@ export class TournamentComponent {
 
       return this.currentSortDirection === 'desc' ? -comparison : comparison;
     });
+  }
+
+  /**
+   * Shows error message in toast notification
+   */
+  private showErrorMessage(message: string): void {
+    this.errorMessage = message;
+    this.showErrorToast = true;
+    
+    // Auto-hide toast after 5 seconds
+    setTimeout(() => {
+      this.hideErrorToast();
+    }, 5000);
+  }
+
+  /**
+   * Hides the error toast
+   */
+  hideErrorToast(): void {
+    this.showErrorToast = false;
+    this.errorMessage = '';
+  }
+
+  /**
+   * Gets user-friendly error message based on HTTP error
+   */
+  private getErrorMessage(error: any): string {
+    if (error.status === 0) {
+      return 'Unable to connect to the server. Please check if the API is running.';
+    }
+    if (error.status >= 500) {
+      return 'Server error occurred. Please try again later.';
+    }
+    if (error.status === 404) {
+      return 'API endpoint not found. Please check the server configuration.';
+    }
+    if (error.status >= 400) {
+      return 'Invalid request. Please try again.';
+    }
+    return 'An unexpected error occurred. Please try again.';
   }
 }

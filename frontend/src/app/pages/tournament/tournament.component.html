@@ -77,5 +77,21 @@
   </div>
 </div>
 
+<!-- Error Toast Notification -->
+@if (showErrorToast) {
+  <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999">
+    <div class="toast show" role="alert">
+      <div class="toast-header bg-danger text-white">
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        <strong class="me-auto">Connection Error</strong>
+        <button type="button" class="btn-close btn-close-white" (click)="hideErrorToast()" aria-label="Close"></button>
+      </div>
+      <div class="toast-body bg-dark text-light border border-danger border-top-0">
+        {{ errorMessage }}
+      </div>
+    </div>
+  </div>
+}
+
 <!-- Rules Modal -->
 <app-rules-modal></app-rules-modal>
