@@ -40,14 +40,10 @@ public class TournamentService : ITournamentService
     /// <returns>A collection of Pokémon with calculated battle statistics.</returns>
     public async Task<IEnumerable<TournamentPokemon>> GetTournamentStatistics(string sortBy, string sortDirection = "asc")
     {
-
-        // Step 1: Fetch 16 random Pokémon from API
         var pokemons = await FetchPokemonsFromApi();
 
-        // Step 2: Run all-versus-all battles
         SimulateBattles(pokemons);
 
-        // Step 3: Sort results before returning
         var ordered = SortPokemons(pokemons, sortBy, sortDirection);
 
         return ordered;
@@ -66,16 +62,17 @@ public class TournamentService : ITournamentService
             selectedIds.Add(random.Next(1, 152));
         }
 
+        // Create tasks for all HTTP requests
+        var tasks = selectedIds.Select(id => _httpClient.GetFromJsonAsync<PokemonResponseDto>($"{id}")).ToArray();
+
         var pokemons = new List<TournamentPokemon>();
 
-        foreach (var id in selectedIds)
+        var results = await Task.WhenAll(tasks);
+
+        foreach (var pokemonDetails in results)
         {
-            // Fetch Pokémon details from the API
-            var pokemonDetails = await _httpClient.GetFromJsonAsync<PokemonResponseDto>($"{id}");
-            
             if (pokemonDetails == null) continue;
 
-            // Use the primary type (slot = 1)
             var primaryType = pokemonDetails.Types.FirstOrDefault(t => t.Slot == 1)?.Type.Name ?? "unknown";
 
             // Create a simplified model for tournament statistics
@@ -87,6 +84,7 @@ public class TournamentService : ITournamentService
                 BaseExperience = pokemonDetails.Base_Experience,
                 ImageUrl = pokemonDetails.Sprites.Front_Default
             });
+            
         }
 
         return pokemons;
@@ -112,7 +110,7 @@ public class TournamentService : ITournamentService
                 var p1 = pokemons[i];
                 var p2 = pokemons[j];
 
-                // Determine who wins between the two
+                
                 var resultForP1 = DetermineBattleOutcome(p1, p2);
 
                 // Register the result for both Pokémon
