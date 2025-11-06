@@ -1,4 +1,6 @@
 using Api.Application;
+using System.Threading.RateLimiting;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,8 +13,29 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Configure JSON serialization to convert enums to strings
+builder.Services.ConfigureHttpJsonOptions(options =>
+{
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
+});
+
 // Register TournamentService and HttpClient
 builder.Services.AddHttpClient<ITournamentService, TournamentService>();
+
+// Configure rate limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("TournamentPolicy", context => 
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 5
+            }));
+});
 
 
 // Configure CORS for Angular frontend (localhost:4200)
@@ -36,6 +59,8 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
+
+app.UseRateLimiter();
 
 /// <summary>
 /// GET endpoint that simulates a Pokémon tournament and returns calculated statistics.
@@ -73,6 +98,7 @@ app.MapGet("/pokemon/tournament/statistics", async (
         return Results.Problem("An unexpected error occurred", statusCode: 500);
     }
 })
+.RequireRateLimiting("TournamentPolicy")
 .WithName("GetPokemonTournamentStatistics")
 .WithOpenApi(op =>
 {
