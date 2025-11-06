@@ -87,12 +87,14 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
       {
         "opponentName": "Charmander",
         "opponentType": "fire",
-        "result": 1
+        "result": "Loss"
       }
     ]
   }
 ]
 ```
+
+**Note:** The `result` field returns string values: `"Win"`, `"Loss"`, or `"Tie"`.
 
 ## ⚔️ Battle Rules
 
@@ -127,6 +129,7 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
 - **Input Validation**: Comprehensive parameter validation
+- **Rate Limiting**: Fixed window limiter (10 requests/minute per IP)
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
@@ -217,6 +220,7 @@ The frontend expects the API at `http://localhost:5268`. To change this, update 
 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
+- **429 Too Many Requests**: Rate limit exceeded (10 requests/minute)
 - **500 Internal Server Error**: Unexpected errors
 - **Network Errors**: External API unavailable
 

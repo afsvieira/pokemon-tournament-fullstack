@@ -1,6 +1,7 @@
 import { Component, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TournamentPokemon, SortBy, SortDirection, SortOptions } from '../../models';
+import { TournamentPokemon } from '../../models/tournament-pokemon.model';
+import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
 import { TournamentService } from '../../services/tournament.service';
 import { PokemonCardComponent } from '../../components/pokemon-card/pokemon-card.component';
 import { SortControlsComponent } from '../../components/sort-controls/sort-controls.component';
@@ -18,8 +19,8 @@ export class TournamentComponent {
 
   pokemonList: TournamentPokemon[] = [];
   isLoading = false;
-  currentSortBy: SortBy = 'wins';
-  currentSortDirection: SortDirection = 'desc';
+  currentSortBy: SortBy = SortBy.wins;
+  currentSortDirection: SortDirection = SortDirection.desc;
   errorMessage = '';
   showErrorToast = false;
 
@@ -97,7 +98,7 @@ export class TournamentComponent {
   private showErrorMessage(message: string): void {
     this.errorMessage = message;
     this.showErrorToast = true;
-    
+
     // Auto-hide toast after 5 seconds
     setTimeout(() => {
       this.hideErrorToast();

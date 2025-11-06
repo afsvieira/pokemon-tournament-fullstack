@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { SortControlsComponent } from './sort-controls.component';
-import { SortBy, SortDirection } from '../../models';
+import { SortBy, SortDirection } from '../../models/sort-options.model';
 
 /**
  * Unit tests for SortControlsComponent.
@@ -25,8 +25,8 @@ describe('SortControlsComponent', () => {
    */
   it('should create with default sort options', () => {
     expect(component).toBeTruthy();
-    expect(component.currentSortBy).toBe('wins');
-    expect(component.currentSortDirection).toBe('desc');
+    expect(component.currentSortBy).toBe(SortBy.wins);
+    expect(component.currentSortDirection).toBe(SortDirection.desc);
   });
 
   /**
@@ -34,21 +34,21 @@ describe('SortControlsComponent', () => {
    */
   it('should toggle sort direction when button is clicked', () => {
     spyOn(component.sortChange, 'emit');
-    
+
     // Initial state is 'desc'
-    expect(component.currentSortDirection).toBe('desc');
-    
+    expect(component.currentSortDirection).toBe(SortDirection.desc);
+
     // Toggle to 'asc'
     component.toggleSortDirection();
-    expect(component.currentSortDirection).toBe('asc');
+    expect(component.currentSortDirection).toBe(SortDirection.asc);
     expect(component.sortChange.emit).toHaveBeenCalledWith({
-      sortBy: 'wins',
-      sortDirection: 'asc'
+      sortBy: SortBy.wins,
+      sortDirection: SortDirection.asc
     });
-    
+
     // Toggle back to 'desc'
     component.toggleSortDirection();
-    expect(component.currentSortDirection).toBe('desc');
+    expect(component.currentSortDirection).toBe(SortDirection.desc);
   });
 
   /**
@@ -56,15 +56,15 @@ describe('SortControlsComponent', () => {
    */
   it('should emit sortChange when sort field changes', () => {
     spyOn(component.sortChange, 'emit');
-    
+
     const selectElement = fixture.nativeElement.querySelector('select');
-    selectElement.value = 'name';
+    selectElement.value = SortBy.name;
     selectElement.dispatchEvent(new Event('change'));
-    
-    expect(component.currentSortBy).toBe('name');
+
+    expect(component.currentSortBy).toBe(SortBy.name);
     expect(component.sortChange.emit).toHaveBeenCalledWith({
-      sortBy: 'name',
-      sortDirection: 'desc'
+      sortBy: SortBy.name,
+      sortDirection: SortDirection.desc
     });
   });
 
@@ -74,12 +74,12 @@ describe('SortControlsComponent', () => {
   it('should display all sort options', () => {
     const options = fixture.nativeElement.querySelectorAll('option');
     const optionValues = Array.from(options).map((opt: any) => opt.value);
-    
-    expect(optionValues).toContain('wins');
-    expect(optionValues).toContain('losses');
-    expect(optionValues).toContain('ties');
-    expect(optionValues).toContain('name');
-    expect(optionValues).toContain('id');
+
+    expect(optionValues).toContain(SortBy.wins);
+    expect(optionValues).toContain(SortBy.losses);
+    expect(optionValues).toContain(SortBy.ties);
+    expect(optionValues).toContain(SortBy.name);
+    expect(optionValues).toContain(SortBy.id);
   });
 
   /**
@@ -87,15 +87,15 @@ describe('SortControlsComponent', () => {
    */
   it('should display correct icon and text for sort direction', () => {
     const button = fixture.nativeElement.querySelector('button');
-    
+
     // Test descending (default)
     expect(button.textContent).toContain('Desc');
     expect(button.querySelector('i')).toHaveClass('fa-arrow-down-wide-short');
-    
+
     // Toggle to ascending
     component.toggleSortDirection();
     fixture.detectChanges();
-    
+
     expect(button.textContent).toContain('Asc');
     expect(button.querySelector('i')).toHaveClass('fa-arrow-up-short-wide');
   });

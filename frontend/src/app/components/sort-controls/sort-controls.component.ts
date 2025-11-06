@@ -1,25 +1,26 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { SortBy, SortDirection, SortOptions } from '../../models';
+import { FormsModule } from '@angular/forms';
+import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
+import { SortByLabels } from '../../models/sort-labels.model';
 
 @Component({
   selector: 'app-sort-controls',
-  imports: [CommonModule],
+  imports: [CommonModule, FormsModule],
   standalone: true,
   templateUrl: './sort-controls.component.html',
   styleUrl: './sort-controls.component.scss'
 })
 export class SortControlsComponent {
-  @Input() currentSortBy: SortBy = 'wins';
-  @Input() currentSortDirection: SortDirection = 'desc';
+  @Input() currentSortBy: SortBy = 'wins' as SortBy;
+  @Input() currentSortDirection: SortDirection = 'desc' as SortDirection;
   @Output() sortChange = new EventEmitter<SortOptions>();
 
   /**
    * Handles sort field change from select
    */
-  onSortByChange(event: Event): void {
-    const target = event.target as HTMLSelectElement;
-    this.currentSortBy = target.value as SortBy;
+  onSortByChange(value: string): void {
+    this.currentSortBy = value as SortBy;
     this.emitSortChange();
   }
 
@@ -36,7 +37,7 @@ export class SortControlsComponent {
    * Toggles sort direction between asc and desc
    */
   toggleSortDirection(): void {
-    this.currentSortDirection = this.currentSortDirection === 'asc' ? 'desc' : 'asc';
+    this.setCurrentSortDirection();
     this.emitSortChange();
   }
 
@@ -44,14 +45,7 @@ export class SortControlsComponent {
    * Gets display label for sort field
    */
   getSortByLabel(sortBy: SortBy): string {
-    const labels: Record<SortBy, string> = {
-      wins: 'Wins',
-      losses: 'Losses',
-      ties: 'Ties',
-      name: 'Name',
-      id: 'ID'
-    };
-    return labels[sortBy];
+    return SortByLabels[sortBy];
   }
 
   /**
@@ -62,5 +56,9 @@ export class SortControlsComponent {
       sortBy: this.currentSortBy,
       sortDirection: this.currentSortDirection
     });
+  }
+
+  private setCurrentSortDirection() {
+    this.currentSortDirection = this.currentSortDirection === SortDirection.asc ? SortDirection.desc : SortDirection.asc;
   }
 }

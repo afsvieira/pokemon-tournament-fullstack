@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { TournamentPokemon, SortBy, SortDirection } from '../models';
+import { TournamentPokemon } from '../models/tournament-pokemon.model';
+import { SortBy, SortDirection } from '../models/sort-options.model';
 
 @Injectable({
   providedIn: 'root'
@@ -18,8 +19,8 @@ export class TournamentService {
    * @returns Observable of tournament pokemon array
    */
   getTournamentStatistics(
-    sortBy: SortBy, 
-    sortDirection: SortDirection = 'asc'
+    sortBy: SortBy,
+    sortDirection: SortDirection = SortDirection.asc
   ): Observable<TournamentPokemon[]> {
     const params = new HttpParams()
       .set('sortBy', sortBy)

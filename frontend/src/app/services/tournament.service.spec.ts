@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TournamentService } from './tournament.service';
-import { TournamentPokemon } from '../models';
+import { TournamentPokemon } from '../models/tournament-pokemon.model';
+import { SortBy, SortDirection } from '../models/sort-options.model';
 
 /**
  * Unit tests for TournamentService.
@@ -31,7 +32,7 @@ describe('TournamentService', () => {
       imports: [HttpClientTestingModule],
       providers: [TournamentService]
     });
-    
+
     service = TestBed.inject(TournamentService);
     httpMock = TestBed.inject(HttpTestingController);
   });
@@ -51,7 +52,7 @@ describe('TournamentService', () => {
    * Tests successful API call and data retrieval.
    */
   it('should fetch tournament statistics successfully', () => {
-    service.getTournamentStatistics('wins', 'desc').subscribe(data => {
+    service.getTournamentStatistics(SortBy.wins, SortDirection.desc).subscribe(data => {
       expect(data).toEqual(mockApiResponse);
       expect(data.length).toBe(1);
       expect(data[0].name).toBe('Bulbasaur');

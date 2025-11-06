@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { TournamentPokemon, getBattleResultString } from '../../models';
+import { TournamentPokemon } from '../../models/tournament-pokemon.model';
+import { BattleOutcome, getBattleResultLabel, getBattleResultClass } from '../../models/battle-record.model';
 
 @Component({
   selector: 'app-battle-history-modal',
@@ -13,5 +14,7 @@ export class BattleHistoryModalComponent {
   @Input({ required: true }) pokemon!: TournamentPokemon;
   @Output() closeModal = new EventEmitter<void>();
 
-  getBattleResultString = getBattleResultString;
+  getBattleResultLabel = getBattleResultLabel;
+  getBattleResultClass = getBattleResultClass;
+  BattleOutcome = BattleOutcome;
 }

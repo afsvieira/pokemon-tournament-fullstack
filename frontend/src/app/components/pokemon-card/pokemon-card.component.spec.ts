@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { PokemonCardComponent } from './pokemon-card.component';
-import { TournamentPokemon } from '../../models';
+import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 
 /**
  * Unit tests for PokemonCardComponent.
@@ -48,7 +48,7 @@ describe('PokemonCardComponent', () => {
    */
   it('should display Pokemon information correctly', () => {
     const compiled = fixture.nativeElement as HTMLElement;
-    
+
     expect(compiled.textContent).toContain('Bulbasaur');
     expect(compiled.textContent).toContain('#001');
     expect(compiled.textContent).toContain('64 XP');
@@ -63,9 +63,9 @@ describe('PokemonCardComponent', () => {
    */
   it('should open modal when View Battles button is clicked', () => {
     const button = fixture.nativeElement.querySelector('button');
-    
+
     button.click();
-    
+
     expect(component.showModal).toBeTrue();
   });
 
@@ -95,7 +95,7 @@ describe('PokemonCardComponent', () => {
   it('should show emoji placeholder when no imageUrl', () => {
     component.pokemon = { ...mockPokemon, imageUrl: undefined };
     fixture.detectChanges();
-    
+
     const placeholder = fixture.nativeElement.querySelector('.fs-1');
     expect(placeholder?.textContent).toContain('🎴');
   });

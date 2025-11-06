@@ -9,13 +9,13 @@
   <!-- Sort field dropdown -->
   <select class="form-select border-secondary sort-select"
           style="width: auto"
-          [value]="currentSortBy"
-          (change)="onSortByChange($event)">
-    <option value="wins">Wins</option>
-    <option value="losses">Losses</option>
-    <option value="ties">Ties</option>
-    <option value="name">Name</option>
-    <option value="id">ID</option>
+          [ngModel]="currentSortBy"
+          (ngModelChange)="onSortByChange($event)">
+    <option [value]="'wins'">Wins</option>
+    <option [value]="'losses'">Losses</option>
+    <option [value]="'ties'">Ties</option>
+    <option [value]="'name'">Name</option>
+    <option [value]="'id'">ID</option>
   </select>
 
   <!-- Sort direction toggle button -->

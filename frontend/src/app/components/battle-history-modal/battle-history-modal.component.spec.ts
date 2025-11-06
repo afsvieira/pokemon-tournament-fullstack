@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { BattleHistoryModalComponent } from './battle-history-modal.component';
-import { TournamentPokemon } from '../../models';
+import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 
 /**
  * Unit tests for BattleHistoryModalComponent.

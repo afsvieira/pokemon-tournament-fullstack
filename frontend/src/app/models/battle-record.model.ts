@@ -1,27 +1,40 @@
-export type BattleResult = 'Win' | 'Loss' | 'Tie' | 0 | 1 | 2;
+// Enum for battle outcomes (matching C# BattleOutcomeEnum)
+export enum BattleOutcome {
+  Win = 'Win',
+  Loss = 'Loss',
+  Tie = 'Tie'
+}
 
 export interface BattleRecord {
   opponentName: string;
   opponentType: string;
-  result: BattleResult;
+  result: BattleOutcome;
 }
 
-// Enum mapping for C# BattleOutcomeEnum
-export const BattleOutcomeEnum = {
-  Win: 0,
-  Loss: 1,
-  Tie: 2
-} as const;
-
-// Helper function to convert enum to string
-export function getBattleResultString(result: BattleResult): string {
-  if (typeof result === 'number') {
-    switch (result) {
-      case 0: return 'Win';
-      case 1: return 'Loss';
-      case 2: return 'Tie';
-      default: return 'Unknown';
-    }
+// Helper function to get display label for battle result
+export function getBattleResultLabel(result: BattleOutcome): string {
+  switch (result) {
+    case BattleOutcome.Win:
+      return 'Win';
+    case BattleOutcome.Loss:
+      return 'Loss';
+    case BattleOutcome.Tie:
+      return 'Tie';
+    default:
+      return 'Unknown';
   }
-  return result as string;
+}
+
+// Helper function to get CSS class for styling
+export function getBattleResultClass(result: BattleOutcome): string {
+  switch (result) {
+    case BattleOutcome.Win:
+      return 'result-win';
+    case BattleOutcome.Loss:
+      return 'result-loss';
+    case BattleOutcome.Tie:
+      return 'result-tie';
+    default:
+      return 'result-unknown';
+  }
 }
