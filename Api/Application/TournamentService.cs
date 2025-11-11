@@ -11,8 +11,6 @@ namespace Api.Application;
 public class TournamentService : ITournamentService
 {
     private readonly HttpClient _httpClient;
-    // Defines basic type advantages for battle comparison.
-    // The dictionary structure allows easy extension to include additional Pokémon types if needed.
     private readonly Dictionary<string, string> _typeAdvantages = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
     {
         {"water", "fire"},
@@ -41,32 +39,22 @@ public class TournamentService : ITournamentService
     public async Task<IEnumerable<TournamentPokemon>> GetTournamentStatistics(string sortBy, string sortDirection = "asc")
     {
         var pokemons = await FetchPokemonsFromApi();
-
         SimulateBattles(pokemons);
-
-        var ordered = SortPokemons(pokemons, sortBy, sortDirection);
-
-        return ordered;
-
+        return SortPokemons(pokemons, sortBy, sortDirection);
     }
 
-    // Retrieves a random list of Pokémon (default: 16 unique IDs between 1 and 151)
     private async Task<List<TournamentPokemon>> FetchPokemonsFromApi(int count = 16)
     {
         var random = new Random();
         var selectedIds = new HashSet<int>();
 
-        // Ensures unique Pokémon IDs within the selected range
         while (selectedIds.Count < count)
         {
             selectedIds.Add(random.Next(1, 152));
         }
 
-        // Create tasks for all HTTP requests
         var tasks = selectedIds.Select(id => _httpClient.GetFromJsonAsync<PokemonResponseDto>($"{id}")).ToArray();
-
         var pokemons = new List<TournamentPokemon>();
-
         var results = await Task.WhenAll(tasks);
 
         foreach (var pokemonDetails in results)
@@ -75,7 +63,6 @@ public class TournamentService : ITournamentService
 
             var primaryType = pokemonDetails.Types.FirstOrDefault(t => t.Slot == 1)?.Type.Name ?? "unknown";
 
-            // Create a simplified model for tournament statistics
             pokemons.Add(new TournamentPokemon
             {
                 Id = pokemonDetails.Id,
@@ -84,14 +71,11 @@ public class TournamentService : ITournamentService
                 BaseExperience = pokemonDetails.Base_Experience,
                 ImageUrl = pokemonDetails.Sprites.Front_Default
             });
-            
         }
 
         return pokemons;
-
     }
 
-    // Capitalizes Pokémon names for better presentation
     private static string Capitalize(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
@@ -100,7 +84,6 @@ public class TournamentService : ITournamentService
         return char.ToUpper(name[0]) + name.Substring(1);
     }
 
-    // Simulates all-versus-all battles between Pokémon and registers results
     private void SimulateBattles(List<TournamentPokemon> pokemons)
     {
         for (int i = 0; i < pokemons.Count; i++)
@@ -109,11 +92,8 @@ public class TournamentService : ITournamentService
             {
                 var p1 = pokemons[i];
                 var p2 = pokemons[j];
-
-                
                 var resultForP1 = DetermineBattleOutcome(p1, p2);
 
-                // Register the result for both Pokémon
                 switch (resultForP1)
                 {
                     case BattleOutcomeEnum.Win:
@@ -129,12 +109,10 @@ public class TournamentService : ITournamentService
                         p2.BattleRegister(p1, BattleOutcomeEnum.Tie);
                         break;
                 }
-
             }
         }
     }
 
-    // Determines the winner based on type advantages or base experience (tie-breaker)
     private BattleOutcomeEnum DetermineBattleOutcome(TournamentPokemon p1, TournamentPokemon p2)
     {
         var type1 = p1.Type.ToLower();
@@ -147,14 +125,12 @@ public class TournamentService : ITournamentService
 
         if (p1.BaseExperience > p2.BaseExperience)
             return BattleOutcomeEnum.Win;
-
         if (p1.BaseExperience < p2.BaseExperience)
             return BattleOutcomeEnum.Loss;
 
         return BattleOutcomeEnum.Tie;
     }
 
-    // Sorts the Pokémon list based on the selected field and direction
     private IEnumerable<TournamentPokemon> SortPokemons(List<TournamentPokemon> pokemons, string sortBy, string direction)
     {
         if (string.IsNullOrWhiteSpace(sortBy))

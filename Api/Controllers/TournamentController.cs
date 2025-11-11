@@ -43,14 +43,12 @@ public class TournamentController : ControllerBase
         [FromQuery] string? sortBy,
         [FromQuery] string? sortDirection = "asc")
     {
-        // Validate required query parameter: sortBy
         if (string.IsNullOrWhiteSpace(sortBy))
         {
             _logger.LogWarning("GetTournamentStatistics called without sortBy parameter");
             return BadRequest(new { error = "sortBy parameter is required" });
         }
 
-        // Validate sort field
         var validSorts = new[] { "wins", "losses", "ties", "name", "id" };
         if (!validSorts.Contains(sortBy.ToLower()))
         {
@@ -58,7 +56,6 @@ public class TournamentController : ControllerBase
             return BadRequest(new { error = "sortBy parameter is invalid" });
         }
 
-        // Validate sort direction
         if (!string.IsNullOrWhiteSpace(sortDirection))
         {
             var validDirections = new[] { "asc", "desc" };
