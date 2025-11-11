@@ -1,4 +1,6 @@
 using Api.Application;
+using Api.Domain;
+using Api.Infrastructure;
 using System.Threading.RateLimiting;
 using System.Text.Json.Serialization;
 
@@ -36,7 +38,9 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Register application services
-builder.Services.AddHttpClient<ITournamentService, TournamentService>();
+builder.Services.AddHttpClient<PokemonApiClient>();
+builder.Services.AddScoped<BattleSimulator>();
+builder.Services.AddScoped<ITournamentService, TournamentService>();
 
 // Configure rate limiting
 builder.Services.AddRateLimiter(options =>

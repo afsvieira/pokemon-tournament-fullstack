@@ -1,4 +1,3 @@
-using Api.Application;
 using Api.Domain;
 
 namespace Api.Tests;
@@ -9,12 +8,11 @@ namespace Api.Tests;
 /// </summary>
 public class BattleLogicTests
 {
-    private readonly TournamentService _service;
+    private readonly BattleSimulator _battleSimulator;
 
     public BattleLogicTests()
     {
-        // Initialize service for accessing private battle logic methods
-        _service = new TournamentService(new HttpClient());
+        _battleSimulator = new BattleSimulator();
     }
 
     /// <summary>
@@ -39,7 +37,7 @@ public class BattleLogicTests
         var pokemon2 = CreatePokemon(2, "Defender", defenderType, 50);
 
         // Act - Determine battle outcome using internal logic
-        var result = InvokeDetermineBattleOutcome(pokemon1, pokemon2);
+        var result = _battleSimulator.DetermineBattleOutcome(pokemon1, pokemon2);
 
         // Assert - Verify type advantage rules are correctly applied
         Assert.Equal(expectedResult, result);
@@ -64,7 +62,7 @@ public class BattleLogicTests
         var pokemon2 = CreatePokemon(2, "Pokemon2", "normal", exp2);
 
         // Act - Battle outcome should be determined by base experience only
-        var result = InvokeDetermineBattleOutcome(pokemon1, pokemon2);
+        var result = _battleSimulator.DetermineBattleOutcome(pokemon1, pokemon2);
 
         // Assert - Verify experience-based tie-breaking works correctly
         Assert.Equal(expectedResult, result);
@@ -82,7 +80,7 @@ public class BattleLogicTests
         var firePokemon = CreatePokemon(2, "Charmander", "fire", 100);  // High experience
 
         // Act - Type advantage should override experience disadvantage
-        var result = InvokeDetermineBattleOutcome(waterPokemon, firePokemon);
+        var result = _battleSimulator.DetermineBattleOutcome(waterPokemon, firePokemon);
 
         // Assert - Water should win despite lower base experience
         Assert.Equal(BattleOutcomeEnum.Win, result);
@@ -98,12 +96,5 @@ public class BattleLogicTests
             BaseExperience = baseExp
         };
     }
-
-    private BattleOutcomeEnum InvokeDetermineBattleOutcome(TournamentPokemon p1, TournamentPokemon p2)
-    {
-        var method = typeof(TournamentService).GetMethod("DetermineBattleOutcome",
-            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-        
-        return (BattleOutcomeEnum)method!.Invoke(_service, new object[] { p1, p2 })!;
-    }
 }
+
