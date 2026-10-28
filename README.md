@@ -52,7 +52,9 @@ The Angular app will be available at: `http://localhost:4200`
 
 ## 📋 API Documentation
 
-### Endpoint
+The API has two flows: the **Instant Simulation** (`GET /pokemon/tournament/statistics`), which runs a whole tournament in one request, and the **round-by-round Tournament**, held in memory and played one Round at a time.
+
+### Instant Simulation
 
 **GET** `/pokemon/tournament/statistics`
 
@@ -106,6 +108,46 @@ Invalid or missing parameters return `400 Bad Request` with an error message:
 { "error": "sortBy parameter is required" }
 ```
 
+### Round-by-round Tournament
+
+Tournaments are kept in memory until the API restarts; they never expire.
+
+| Verb | Route | Success | Rate limit |
+|------|-------|---------|------------|
+| POST | `/pokemon/tournament` | `201`, `Location: /pokemon/tournament/{id}`, the Tournament | `StartTournamentPolicy` |
+| GET | `/pokemon/tournament/{id}` | `200`, the Tournament | `RoundByRoundPolicy` |
+
+**Start** (`POST /pokemon/tournament`) takes no body, picks 16 random Pokémon and returns the new Tournament, every Pokémon at 0 wins, losses and ties:
+
+```json
+{
+  "id": "3f2b8c1e-4d5a-4b6c-8e7f-9a0b1c2d3e4f",
+  "startedAt": "2026-10-28T14:02:00+00:00",
+  "roundsPlayed": 0,
+  "standings": [
+    {
+      "id": 25,
+      "name": "Pikachu",
+      "type": "electric",
+      "baseExperience": 112,
+      "imageUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png",
+      "wins": 0,
+      "losses": 0,
+      "ties": 0,
+      "winRate": 0
+    }
+  ]
+}
+```
+
+`startedAt` is UTC. `standings` holds all 16 Pokémon in Start order, the order they were picked in, without `battleRecords`.
+
+When PokéAPI fails or returns fewer than 16 Pokémon, Start answers `502 Bad Gateway` and stores nothing:
+
+```json
+{ "error": "Could not start a tournament right now. Try again later." }
+```
+
 ## ⚔️ Battle Rules
 
 ### Type Advantages
@@ -127,6 +169,8 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 ## 🎮 Features
 
 ### Frontend Features
+- **Navigation**: Switch between the Instant Simulation (`/tournament`) and Round by Round (`/round-by-round`)
+- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), with the 16 Pokémon's Standings sorted locally
 - **Tournament Generation**: Fetch and simulate battles for 16 random Pokémon
 - **Dynamic Sorting**: Sort results by wins, losses, ties, name, or ID
 - **Battle History**: View detailed battle records for each Pokémon
@@ -138,12 +182,16 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 
 ### Backend Features
 - **Tournament Simulation**: Complete round-robin tournament (120 battles total)
+- **Round-by-round Tournaments**: Started with 16 random Pokémon and held in memory until the API restarts
 - **Type-Based Combat**: Implements Pokémon type advantage system
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
 - **Input Validation**: Rejects missing or unknown `sortBy` and unknown `sortDirection` with `400`
 - **PokéAPI Cache**: Each Pokémon's data is cached in memory after its first fetch, as PokéAPI's [fair use policy](https://pokeapi.co/docs/v2) asks; the 16 Pokémon are still drawn at random on every call
-- **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected with `429`. The numbers are set in configuration (see [Rate Limit Configuration](#rate-limit-configuration))
+- **Rate Limiting**: Fixed windows per IP, each policy with its own counters, rejecting with `429`. The numbers are set in configuration (see [Rate Limit Configuration](#rate-limit-configuration)):
+  - `TournamentPolicy`, the Instant Simulation: 10 requests/minute; up to 5 more wait for the next window
+  - `StartTournamentPolicy`, Start: 10 requests/minute, no queue
+  - `RoundByRoundPolicy`, every other round-by-round endpoint: 60 requests/minute, no queue
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
@@ -161,9 +209,11 @@ dotnet test
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
-- Rate limiting and its configuration through the real HTTP pipeline (6 tests)
+- Round-by-round service operations, with PokéAPI and the clock faked (2 tests)
+- Round-by-round endpoints through the real HTTP pipeline (3 tests)
+- Rate limiting and its configuration through the real HTTP pipeline (9 tests)
 - PokéAPI client and its cache, with PokéAPI stubbed (4 tests)
-- **Total: 30 tests**
+- **Total: 38 tests**
 
 ### Run Frontend Tests
 
@@ -180,10 +230,12 @@ npx ng test --watch=false --browsers=ChromeHeadless
 
 **Test Coverage:**
 - UI components: pokemon card (6), sort controls (5), battle history modal (2), rules modal (1)
-- App shell and theme toggle (4 tests)
+- App shell, navigation and theme toggle (5 tests)
 - Tournament page, including the rate-limit error message (3 tests)
+- Tournament History page, through the app routes: Start and its error toast (2 tests)
+- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry (3 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 23 tests**
+- **Total: 29 tests**
 
 ## 🛠️ Development
 
@@ -196,16 +248,18 @@ pokemon-tournament-fullstack/
 │   ├── Controllers/              # HTTP endpoint and query validation
 │   ├── Application/              # Tournament service and the interfaces it depends on
 │   ├── Domain/                   # Battle rules, domain models and enums
-│   ├── Infrastructure/           # PokéAPI HTTP client and its cache
-│   ├── Dtos/                     # PokéAPI response shapes
-│   ├── Shared/                   # String helpers and rate-limit policy setup
+│   ├── Infrastructure/           # PokéAPI HTTP client and its cache, in-memory Tournament repository
+│   ├── Dtos/                     # PokéAPI response shapes and round-by-round response bodies
+│   ├── Shared/                   # String helpers, rate-limit policy names and setup
 │   └── Program.cs                # DI, rate limiting, CORS, Swagger
 ├── Api.Tests/                    # xUnit test project
 ├── frontend/                     # Angular 18 application
 │   └── src/app/
 │       ├── components/           # Reusable UI components
 │       ├── pages/                # Page components
-│       ├── services/             # HTTP services
+│       ├── services/             # HTTP services and the shared API base URL
+│       ├── shared/               # Error messages and shared styles
+│       ├── testing/              # Test data shared by specs
 │       └── models/               # API models, enums and display mappings
 └── README.md
 ```
@@ -238,7 +292,9 @@ The rate-limit numbers live in the `RateLimiting` section of `Api/appsettings.js
 
 ```json
 "RateLimiting": {
-  "TournamentPolicy": { "PermitLimit": 10, "WindowSeconds": 60, "QueueLimit": 5 }
+  "TournamentPolicy": { "PermitLimit": 10, "WindowSeconds": 60, "QueueLimit": 5 },
+  "StartTournamentPolicy": { "PermitLimit": 10, "WindowSeconds": 60, "QueueLimit": 0 },
+  "RoundByRoundPolicy": { "PermitLimit": 60, "WindowSeconds": 60, "QueueLimit": 0 }
 }
 ```
 
@@ -250,7 +306,7 @@ There are no defaults in code: the API refuses to start, naming the section, whe
 
 ### Frontend Configuration
 
-The frontend expects the API at `http://localhost:5268`. To change this, update the `apiUrl` in `frontend/src/app/services/tournament.service.ts`.
+The frontend expects the API at `http://localhost:5268`. To change this, update `API_BASE_URL` in `frontend/src/app/services/api-base-url.ts`.
 
 The API only accepts cross-origin requests from `http://localhost:4200`. If the frontend runs elsewhere, update the `AllowAngular` CORS policy in `Api/Program.cs`.
 
@@ -265,11 +321,13 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
-- **429 Too Many Requests**: Rate limit exceeded and the queue is full
+- **429 Too Many Requests**: Rate limit exceeded and the queue, if the policy has one, is full
+- **502 Bad Gateway**: Start couldn't get 16 Pokémon from PokéAPI
 - **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable for a Pokémon not yet cached
 
 ### Frontend Errors
 - **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429`
+- **Round by Round**: a failed Start shows a toast with the API's `error` message, or one based on the status; a Tournament page that fails to load shows the message inline with a Retry button
 - **Loading States**: Spinners and disabled buttons
 
 ## 📝 Notes

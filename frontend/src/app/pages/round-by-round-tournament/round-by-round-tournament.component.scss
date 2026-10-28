@@ -1,0 +1,16 @@
+// Round-by-round Tournament page styles
+.back-link {
+  color: var(--bs-secondary-color);
+  text-decoration: none;
+  transition: color 0.3s ease;
+
+  &:hover {
+    color: var(--bs-emphasis-color);
+  }
+}
+
+.round-panel {
+  border-width: 2px;
+  border-radius: 16px;
+  background: transparent;
+}

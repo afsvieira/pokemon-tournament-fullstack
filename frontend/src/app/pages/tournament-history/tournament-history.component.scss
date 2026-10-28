@@ -1,0 +1,6 @@
+@use '../../shared/buttons' as *;
+
+// Tournament History page styles
+.btn-primary {
+  @include primary-button;
+}

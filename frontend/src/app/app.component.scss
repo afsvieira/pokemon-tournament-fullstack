@@ -2,3 +2,20 @@
 .btn {
   transition: all 0.3s ease;
 }
+
+// Navigation between the two flows
+.app-nav .nav-link {
+  border-radius: 999px;
+  color: var(--bs-secondary-color);
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &:hover {
+    color: var(--bs-emphasis-color);
+  }
+
+  &.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    color: #ffffff;
+  }
+}

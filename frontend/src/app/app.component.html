@@ -15,6 +15,18 @@
       }
     </button>
   </div>
-  
+
+  <!-- Navigation between the two flows -->
+  <nav class="nav nav-pills justify-content-center gap-2 mb-4 app-nav">
+    <a class="nav-link" routerLink="/tournament" routerLinkActive="active">
+      <i class="fas fa-bolt me-2"></i>
+      Instant Simulation
+    </a>
+    <a class="nav-link" routerLink="/round-by-round" routerLinkActive="active">
+      <i class="fas fa-list-ol me-2"></i>
+      Round by Round
+    </a>
+  </nav>
+
   <router-outlet />
 </div>

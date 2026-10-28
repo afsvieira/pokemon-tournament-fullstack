@@ -13,6 +13,8 @@ import { Icons } from '../../models/icons.mapping';
 })
 export class PokemonCardComponent {
   @Input({ required: true }) pokemon!: TournamentPokemon;
+  /** Shows the "View Battles" button; round-by-round pages hide it, since their Round panel lists the Battles */
+  @Input() showBattleHistory = true;
   showModal = false;
 
   openModal(): void {

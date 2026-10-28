@@ -1,4 +1,6 @@
 using Api.Application;
+using Api.Dtos;
+using Api.Shared;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 
@@ -10,7 +12,7 @@ namespace Api.Controllers;
 /// </summary>
 [ApiController]
 [Route("pokemon/tournament")]
-[EnableRateLimiting("TournamentPolicy")]
+[EnableRateLimiting(RateLimitPolicies.InstantSimulation)]
 public class TournamentController : ControllerBase
 {
     private readonly ITournamentService _tournamentService;
@@ -78,6 +80,70 @@ public class TournamentController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "An unexpected error occurred while executing tournament simulation");
+            return Problem("An unexpected error occurred", statusCode: 500);
+        }
+    }
+
+    /// <summary>
+    /// Starts a round-by-round Tournament with 16 random Pokémon, held in memory until the API restarts.
+    /// </summary>
+    /// <returns>The new Tournament, with every Pokémon at 0 wins, losses and ties</returns>
+    /// <response code="201">The Tournament was started; Location points to it</response>
+    /// <response code="429">Rate limit exceeded</response>
+    /// <response code="500">An unexpected error occurred</response>
+    /// <response code="502">PokéAPI failed or returned fewer than 16 Pokémon; nothing was stored</response>
+    [HttpPost]
+    [EnableRateLimiting(RateLimitPolicies.StartTournament)]
+    [ProducesResponseType(typeof(TournamentDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    [ProducesResponseType(StatusCodes.Status502BadGateway)]
+    public async Task<IActionResult> StartTournament()
+    {
+        try
+        {
+            var tournament = await _tournamentService.StartTournament();
+            return Created(Url.Action(nameof(GetTournament), new { id = tournament.Id }), tournament);
+        }
+        catch (PokemonUnavailableException ex)
+        {
+            _logger.LogError(ex, "Could not start a tournament");
+            return StatusCode(
+                StatusCodes.Status502BadGateway,
+                new { error = "Could not start a tournament right now. Try again later." });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while starting a tournament");
+            return Problem("An unexpected error occurred", statusCode: 500);
+        }
+    }
+
+    /// <summary>
+    /// Gets a round-by-round Tournament with its current Standings.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <returns>The Tournament</returns>
+    /// <response code="200">Returns the Tournament</response>
+    /// <response code="404">No Tournament is held under that id</response>
+    /// <response code="429">Rate limit exceeded</response>
+    /// <response code="500">An unexpected error occurred</response>
+    [HttpGet("{id:guid}")]
+    [EnableRateLimiting(RateLimitPolicies.RoundByRound)]
+    [ProducesResponseType(typeof(TournamentDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetTournament(Guid id)
+    {
+        try
+        {
+            var tournament = _tournamentService.GetTournament(id);
+            return tournament is null ? NotFound() : Ok(tournament);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while getting tournament {TournamentId}", id);
             return Problem("An unexpected error occurred", statusCode: 500);
         }
     }

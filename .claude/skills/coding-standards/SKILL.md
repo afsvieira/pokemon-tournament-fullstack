@@ -14,6 +14,7 @@ description: Coding standards for this repo's C# API, its tests and the Angular 
 ## Tests
 
 - Fake only the PokéAPI boundary (`IPokemonApiClient`); use the real `BattleSimulator`, `TournamentPokemon` and other domain classes.
+- The clock is the one other fake: pass `FakeTimeProvider` (`Microsoft.Extensions.TimeProvider.Testing`) where the service takes a `TimeProvider` (see `RoundByRoundServiceTests`).
 - Test service behaviour through `TournamentService`; test middleware, routing and status codes through `WebApplicationFactory<Program>` (see `RateLimitingTests`).
 - Test `PokemonApiClient` itself, and its cache, with the real client over a stubbed `HttpMessageHandler` (see `PokemonApiClientTests`): the one place the fake sits below `IPokemonApiClient`.
 - Async tests are `async Task` and await every assertion (`await Assert.ThrowsAsync<...>`).

@@ -43,6 +43,8 @@ builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<IPokemonApiClient, PokemonApiClient>();
 builder.Services.AddScoped<BattleSimulator>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
+builder.Services.AddSingleton<ITournamentRepository, InMemoryTournamentRepository>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 // Configure rate limiting
 builder.Services.AddRateLimiter(options =>
@@ -52,7 +54,9 @@ builder.Services.AddRateLimiter(options =>
 });
 
 // Each policy's numbers live in the RateLimiting section of appsettings.json
-builder.Services.AddFixedWindowRateLimitPolicy("TournamentPolicy");
+builder.Services.AddFixedWindowRateLimitPolicy(RateLimitPolicies.InstantSimulation);
+builder.Services.AddFixedWindowRateLimitPolicy(RateLimitPolicies.StartTournament);
+builder.Services.AddFixedWindowRateLimitPolicy(RateLimitPolicies.RoundByRound);
 
 // Configure CORS for Angular frontend (localhost:4200)
 builder.Services.AddCors(options =>

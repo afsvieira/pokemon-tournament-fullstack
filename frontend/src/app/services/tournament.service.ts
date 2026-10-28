@@ -3,12 +3,13 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { TournamentPokemon } from '../models/tournament-pokemon.model';
 import { SortBy, SortDirection } from '../models/sort-options.model';
+import { API_BASE_URL } from './api-base-url';
 
 @Injectable({
   providedIn: 'root'
 })
 export class TournamentService {
-  private readonly apiUrl = 'http://localhost:5268/pokemon/tournament/statistics';
+  private readonly apiUrl = `${API_BASE_URL}/statistics`;
 
   constructor(private http: HttpClient) { }
 
