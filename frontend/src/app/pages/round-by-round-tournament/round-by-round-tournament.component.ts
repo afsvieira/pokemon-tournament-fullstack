@@ -53,6 +53,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
   private readonly playedRounds = new Map<number, Round>();
   /** A chip's Round still loading; dropped when another Round takes the panel, so its late answer can't replace it */
   private roundRequest?: Subscription;
+  /** The Tournament still loading; dropped when another load starts, so a slow answer can't replace a newer one */
+  private loadRequest?: Subscription;
+  /** The Round still being processed; dropped when the page moves to another Tournament */
+  private processRequest?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -61,7 +65,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    // The router reuses this page when only the id changes, so load on every id rather than once
+    // The router reuses this page when only the id changes, so load on every id rather than once;
+    // loadTournament drops the previous id's requests, so a slow answer never lands on the new Tournament
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
@@ -133,13 +138,18 @@ export class RoundByRoundTournamentComponent implements OnInit {
     this.isLoading = true;
     this.loadErrorMessage = '';
     this.isTournamentGone = false;
+    // Requests for the Tournament shown until now must not land on this one
+    this.loadRequest?.unsubscribe();
     this.roundRequest?.unsubscribe();
+    this.processRequest?.unsubscribe();
+    this.isProcessing = false;
 
-    this.roundByRoundService.getTournament(this.tournamentId).pipe(
+    this.loadRequest = this.roundByRoundService.getTournament(this.tournamentId).pipe(
       switchMap((tournament) => tournament.roundsPlayed === 0
         ? of({ tournament, lastRound: null })
         : this.roundByRoundService.getRound(tournament.id, tournament.roundsPlayed)
-          .pipe(map((lastRound) => ({ tournament, lastRound }))))
+          .pipe(map((lastRound) => ({ tournament, lastRound })))),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: ({ tournament, lastRound }) => {
         this.tournament = tournament;
@@ -164,30 +174,32 @@ export class RoundByRoundTournamentComponent implements OnInit {
   processRound(): void {
     this.isProcessing = true;
 
-    this.roundByRoundService.processRound(this.tournamentId).subscribe({
-      next: (processedRound) => {
-        this.roundRequest?.unsubscribe();
-        this.showRound({ roundNumber: processedRound.roundNumber, battles: processedRound.battles });
-        this.tournament = {
-          ...this.tournament!,
-          roundsPlayed: processedRound.roundNumber,
-          standings: processedRound.standings
-        };
-        this.isProcessing = false;
-      },
-      error: (error: HttpErrorResponse) => {
-        this.isProcessing = false;
-        if (this.handledAsTournamentGone(error)) {
-          return;
+    this.processRequest = this.roundByRoundService.processRound(this.tournamentId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (processedRound) => {
+          this.roundRequest?.unsubscribe();
+          this.showRound({ roundNumber: processedRound.roundNumber, battles: processedRound.battles });
+          this.tournament = {
+            ...this.tournament!,
+            roundsPlayed: processedRound.roundNumber,
+            standings: processedRound.standings
+          };
+          this.isProcessing = false;
+        },
+        error: (error: HttpErrorResponse) => {
+          this.isProcessing = false;
+          if (this.handledAsTournamentGone(error)) {
+            return;
+          }
+          const message = getErrorMessage(error);
+          if (error.status === HttpStatusCode.Conflict) {
+            this.loadTournament(() => this.toastMessage = message);
+          } else {
+            this.toastMessage = message;
+          }
         }
-        const message = getErrorMessage(error);
-        if (error.status === HttpStatusCode.Conflict) {
-          this.loadTournament(() => this.toastMessage = message);
-        } else {
-          this.toastMessage = message;
-        }
-      }
-    });
+      });
   }
 
   /**
@@ -203,14 +215,16 @@ export class RoundByRoundTournamentComponent implements OnInit {
       return;
     }
 
-    this.roundRequest = this.roundByRoundService.getRound(this.tournamentId, roundNumber).subscribe({
-      next: (round) => this.showRound(round),
-      error: (error: HttpErrorResponse) => {
-        if (!this.handledAsTournamentGone(error)) {
-          this.toastMessage = getErrorMessage(error);
+    this.roundRequest = this.roundByRoundService.getRound(this.tournamentId, roundNumber)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (round) => this.showRound(round),
+        error: (error: HttpErrorResponse) => {
+          if (!this.handledAsTournamentGone(error)) {
+            this.toastMessage = getErrorMessage(error);
+          }
         }
-      }
-    });
+      });
   }
 
   /**

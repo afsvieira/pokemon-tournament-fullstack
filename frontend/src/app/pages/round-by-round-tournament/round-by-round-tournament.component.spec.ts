@@ -445,6 +445,29 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
+   * Verifies that moving to another Tournament while the first one is still loading drops the first request,
+   * so the page shows the Tournament of the current URL even though the router reuses the component.
+   */
+  it('should drop the previous load and show the new Tournament when the id changes while loading', async () => {
+    const other: Tournament = {
+      ...createStartedTournament(),
+      id: '9d8c7b6a-5f4e-4d3c-8b2a-1f0e9d8c7b6a',
+      standings: createStartedTournament().standings.map((pokemon) => ({ ...pokemon, name: `Other${pokemon.id}` }))
+    };
+    const harness = await RouterTestingHarness.create(`/round-by-round/${tournament.id}`);
+    const firstRequest = httpMock.expectOne({ method: 'GET', url: tournamentUrl });
+
+    await harness.navigateByUrl(`/round-by-round/${other.id}`);
+    httpMock.expectOne({ method: 'GET', url: `${API_BASE_URL}/${other.id}` }).flush(other);
+    harness.detectChanges();
+
+    expect(firstRequest.cancelled).toBeTrue();
+    expect(TestBed.inject(Router).url).toBe(`/round-by-round/${other.id}`);
+    expect(firstCardName(harness)).toBe('Other1');
+    expect(harness.routeNativeElement!.querySelectorAll('app-pokemon-card').length).toBe(16);
+  });
+
+  /**
    * Opens the Tournament page and answers its loading requests: the Tournament, then its last Round if any.
    */
   async function openTournamentPage(loaded: Tournament): Promise<RouterTestingHarness> {

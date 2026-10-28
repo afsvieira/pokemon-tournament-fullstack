@@ -301,9 +301,9 @@ npx ng test --watch=false --browsers=ChromeHeadless
 - App shell, navigation and theme toggle (5 tests)
 - Tournament page, including the rate-limit error message (3 tests)
 - Tournament History page, through the app routes: the list and Open, the empty state, load error and Retry, Start and its error toast (5 tests)
-- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, Process Round with its errors, the Round chips and the Battle modal (20 tests)
+- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, Process Round with its errors, the Round chips, the Battle modal and a change of Tournament while loading (21 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 49 tests**
+- **Total: 50 tests**
 
 ## 🛠️ Development
 
