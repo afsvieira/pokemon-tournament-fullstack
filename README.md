@@ -19,7 +19,7 @@ This application fetches 16 random Pokémon from the first generation (Kanto reg
 ### Prerequisites
 
 - .NET 10 SDK
-- Node.js 18+ and npm
+- Node.js 18.19+, 20.11+ or 22+ and npm (Angular 18 requirement)
 - Git
 
 ### 1. Clone the Repository
@@ -60,8 +60,10 @@ The Angular app will be available at: `http://localhost:4200`
 
 | Parameter | Type | Required | Description | Default | Example |
 |-----------|------|----------|-------------|---------|---------|
-| `sortBy` | string | Yes | Field to sort by: `wins`, `losses`, `ties`, `name`, `id` | N/A | `wins` |
-| `sortDirection` | string | No | Sort direction: `asc`, `desc` | `asc` | `desc` |
+| `sortBy` | string | Yes | Field to sort by: `wins`, `losses`, `ties`, `name`, `id` (case-insensitive) | N/A | `wins` |
+| `sortDirection` | string | No | Sort direction: `asc`, `desc` (case-insensitive) | `asc` | `desc` |
+
+Every request runs a brand-new tournament with a new random set of Pokémon; nothing is stored between requests.
 
 ### Example Request
 
@@ -96,6 +98,14 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 
 **Note:** The `result` field returns string values: `"Win"`, `"Loss"`, or `"Tie"`.
 
+### Example Error Response
+
+Invalid or missing parameters return `400 Bad Request` with an error message:
+
+```json
+{ "error": "sortBy parameter is required" }
+```
+
 ## ⚔️ Battle Rules
 
 ### Type Advantages
@@ -108,6 +118,8 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 - Fighting beats Dark
 - Dark beats Ghost
 
+Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
+
 ### Tie-Breaking Rules
 1. If no type advantage exists, the Pokémon with higher base experience wins
 2. If base experience is equal, the battle results in a tie
@@ -118,6 +130,7 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 - **Tournament Generation**: Fetch and simulate battles for 16 random Pokémon
 - **Dynamic Sorting**: Sort results by wins, losses, ties, name, or ID
 - **Battle History**: View detailed battle records for each Pokémon
+- **Battle Rules**: In-app modal explaining type advantages and tie-breaking
 - **Dark/Light Theme**: Toggle between themes (dark by default)
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **Error Handling**: User-friendly error messages with toast notifications
@@ -128,8 +141,8 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 - **Type-Based Combat**: Implements Pokémon type advantage system
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
-- **Input Validation**: Comprehensive parameter validation
-- **Rate Limiting**: Fixed window limiter (10 requests/minute per IP, up to 5 extra requests queued)
+- **Input Validation**: Rejects missing or unknown `sortBy` and unknown `sortDirection` with `400`
+- **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
@@ -154,6 +167,12 @@ dotnet test
 ```bash
 cd frontend
 npm test
+```
+
+`npm test` opens Chrome and re-runs on file changes. For a single headless run:
+
+```bash
+npx ng test --watch=false --browsers=ChromeHeadless
 ```
 
 **Test Coverage:**
@@ -184,7 +203,7 @@ pokemon-tournament-fullstack/
 │       ├── components/           # Reusable UI components
 │       ├── pages/                # Page components
 │       ├── services/             # HTTP services
-│       └── models/               # TypeScript interfaces
+│       └── models/               # API models, enums and display mappings
 └── README.md
 ```
 
@@ -200,7 +219,7 @@ pokemon-tournament-fullstack/
 **Frontend:**
 - Angular 18 with standalone components
 - Bootstrap 5 for styling
-- Font Awesome for icons
+- Bootstrap Icons and Font Awesome for icons
 - RxJS for reactive programming
 - Jasmine/Karma for testing
 
@@ -208,31 +227,30 @@ pokemon-tournament-fullstack/
 
 ### API Configuration
 
-The API runs on `http://localhost:5268` by default. To change the port, modify `Properties/launchSettings.json`.
+The API runs on `http://localhost:5268` by default. To change the port, modify `Api/Properties/launchSettings.json`.
 
 ### Frontend Configuration
 
-The frontend expects the API at `http://localhost:5268`. To change this, update the `apiUrl` in `src/app/services/tournament.service.ts`.
+The frontend expects the API at `http://localhost:5268`. To change this, update the `apiUrl` in `frontend/src/app/services/tournament.service.ts`.
 
 The API only accepts cross-origin requests from `http://localhost:4200`. If the frontend runs elsewhere, update the `AllowAngular` CORS policy in `Api/Program.cs`.
 
 ## 📊 Performance
 
-- **API Response Time**: ~2-3 seconds (includes external API calls)
+- **API Response Time**: Usually well under a second; the 16 PokéAPI requests run in parallel
 - **Battle Simulation**: 120 battles processed in <1ms
 - **Re-sorting**: Changing the sort order re-sorts the loaded results in the browser without calling the API again
-- **Bundle Size**: ~2.5MB (including Bootstrap and Font Awesome)
+- **Bundle Size**: ~712 kB initial bundle in a production build (~148 kB transferred), including Bootstrap and Font Awesome
 
 ## 🚨 Error Handling
 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
-- **429 Too Many Requests**: Rate limit exceeded (10 requests/minute)
-- **500 Internal Server Error**: Unexpected errors
-- **Network Errors**: External API unavailable
+- **503 Service Unavailable**: Rate limit exceeded and the queue is full (the rate limiter's default rejection status)
+- **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable
 
 ### Frontend Errors
-- **Connection Errors**: Toast notifications with retry suggestions
+- **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status
 - **Loading States**: Spinners and disabled buttons
 
 ## 📝 Notes
