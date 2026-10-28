@@ -148,6 +148,14 @@ When PokéAPI fails or returns fewer than 16 Pokémon, Start answers `502 Bad Ga
 { "error": "Could not start a tournament right now. Try again later." }
 ```
 
+A well-formed id the API doesn't hold (for example after a restart) answers `404 Not Found`:
+
+```json
+{ "error": "Tournament not found." }
+```
+
+An id that isn't a Guid matches no route and answers `404` with an empty body.
+
 ## ⚔️ Battle Rules
 
 ### Type Advantages
@@ -170,7 +178,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 
 ### Frontend Features
 - **Navigation**: Switch between the Instant Simulation (`/tournament`) and Round by Round (`/round-by-round`)
-- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), with the 16 Pokémon's Standings sorted locally
+- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), with the 16 Pokémon's Standings sorted locally. A Tournament the API no longer holds shows a page explaining that Tournaments live in memory until the API restarts, with links to the Tournament History and to start a new one
 - **Tournament Generation**: Fetch and simulate battles for 16 random Pokémon
 - **Dynamic Sorting**: Sort results by wins, losses, ties, name, or ID
 - **Battle History**: View detailed battle records for each Pokémon
@@ -209,11 +217,11 @@ dotnet test
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
-- Round-by-round service operations, with PokéAPI and the clock faked (2 tests)
-- Round-by-round endpoints through the real HTTP pipeline (3 tests)
+- Round-by-round service operations, with PokéAPI and the clock faked (3 tests)
+- Round-by-round endpoints through the real HTTP pipeline (5 tests)
 - Rate limiting and its configuration through the real HTTP pipeline (9 tests)
 - PokéAPI client and its cache, with PokéAPI stubbed (4 tests)
-- **Total: 38 tests**
+- **Total: 41 tests**
 
 ### Run Frontend Tests
 
@@ -233,9 +241,9 @@ npx ng test --watch=false --browsers=ChromeHeadless
 - App shell, navigation and theme toggle (5 tests)
 - Tournament page, including the rate-limit error message (3 tests)
 - Tournament History page, through the app routes: Start and its error toast (2 tests)
-- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry (3 tests)
+- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, and the "no longer exists" page with its two actions (6 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 29 tests**
+- **Total: 32 tests**
 
 ## 🛠️ Development
 
@@ -321,13 +329,14 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
+- **404 Not Found**: A Tournament the API doesn't hold (`{ "error": "Tournament not found." }`), or a malformed id (empty body)
 - **429 Too Many Requests**: Rate limit exceeded and the queue, if the policy has one, is full
 - **502 Bad Gateway**: Start couldn't get 16 Pokémon from PokéAPI
 - **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable for a Pokémon not yet cached
 
 ### Frontend Errors
 - **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429`
-- **Round by Round**: a failed Start shows a toast with the API's `error` message, or one based on the status; a Tournament page that fails to load shows the message inline with a Retry button
+- **Round by Round**: a failed Start shows a toast with the API's `error` message, or one based on the status; a Tournament page that fails to load shows the message inline with a Retry button, except a `404`, which shows that the Tournament no longer exists
 - **Loading States**: Spinners and disabled buttons
 
 ## 📝 Notes

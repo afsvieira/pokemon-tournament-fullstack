@@ -125,7 +125,7 @@ public class TournamentController : ControllerBase
     /// <param name="id">The Tournament's id</param>
     /// <returns>The Tournament</returns>
     /// <response code="200">Returns the Tournament</response>
-    /// <response code="404">No Tournament is held under that id</response>
+    /// <response code="404">No Tournament is held under that id; a malformed id matches no route and gets an empty body</response>
     /// <response code="429">Rate limit exceeded</response>
     /// <response code="500">An unexpected error occurred</response>
     [HttpGet("{id:guid}")]
@@ -138,8 +138,13 @@ public class TournamentController : ControllerBase
     {
         try
         {
-            var tournament = _tournamentService.GetTournament(id);
-            return tournament is null ? NotFound() : Ok(tournament);
+            return Ok(_tournamentService.GetTournament(id));
+        }
+        catch (TournamentNotFoundException ex)
+        {
+            // Expected after an API restart or with a stale link, so the id is enough without the stack trace
+            _logger.LogWarning("Tournament {TournamentId} was not found: {Reason}", id, ex.Message);
+            return NotFound(new { error = "Tournament not found." });
         }
         catch (Exception ex)
         {

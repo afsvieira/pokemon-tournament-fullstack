@@ -1,54 +1,70 @@
-<!-- Back to the Tournament History -->
-<a routerLink="/round-by-round" class="back-link d-inline-flex align-items-center mb-3">
-  <i class="fas fa-arrow-left me-2"></i>
-  Tournament History
-</a>
-
-@if (isLoading) {
-  <div class="text-center text-muted py-5">
-    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-    Loading Tournament...
-  </div>
-} @else if (loadErrorMessage) {
-  <!-- Load error: replaces the page so it doesn't read as an empty Tournament -->
-  <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-3 load-error" role="alert">
-    <span>
-      <i class="fas fa-exclamation-triangle me-2"></i>
-      {{ loadErrorMessage }}
-    </span>
-    <button type="button" class="btn btn-outline-danger btn-sm" (click)="loadTournament()">
-      <i class="fas fa-rotate-right me-1"></i>
-      Retry
-    </button>
-  </div>
-} @else if (tournament) {
-  <!-- Tournament header -->
-  <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-    <h1 class="h3 mb-0">Tournament · started {{ tournament.startedAt | date: 'dd/MM HH:mm' }}</h1>
-    <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
-  </div>
-
-  <!-- Round panel -->
-  <div class="card border-secondary mb-4 round-panel">
-    <div class="card-body text-center text-muted py-4">
-      <i class="fas fa-hourglass-half me-2"></i>
-      No Rounds yet
+@if (isTournamentGone) {
+  <!-- Tournament gone: after an API restart, with a stale link or with a malformed id -->
+  <div class="tournament-gone text-center py-5">
+    <div class="fs-1 mb-3"><i class="fas fa-ghost"></i></div>
+    <h1 class="h3 mb-2">This Tournament no longer exists.</h1>
+    <p class="text-muted mb-4">Tournaments are kept in memory only until the API restarts.</p>
+    <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+      <a routerLink="/round-by-round" class="btn btn-outline-secondary btn-lg px-4">
+        <i class="fas fa-list-ol me-2"></i>
+        Tournament History
+      </a>
+      <app-start-tournament-button></app-start-tournament-button>
     </div>
   </div>
+} @else {
+  <!-- Back to the Tournament History -->
+  <a routerLink="/round-by-round" class="back-link d-inline-flex align-items-center mb-3">
+    <i class="fas fa-arrow-left me-2"></i>
+    Tournament History
+  </a>
 
-  <!-- Standings -->
-  <h2 class="h4 mb-3">Standings</h2>
-  <app-sort-controls
-    [currentSortBy]="currentSortBy"
-    [currentSortDirection]="currentSortDirection"
-    (sortChange)="onSortChange($event)">
-  </app-sort-controls>
+  @if (isLoading) {
+    <div class="text-center text-muted py-5">
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      Loading Tournament...
+    </div>
+  } @else if (loadErrorMessage) {
+    <!-- Load error: replaces the page so it doesn't read as an empty Tournament -->
+    <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-3 load-error" role="alert">
+      <span>
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ loadErrorMessage }}
+      </span>
+      <button type="button" class="btn btn-outline-danger btn-sm" (click)="loadTournament()">
+        <i class="fas fa-rotate-right me-1"></i>
+        Retry
+      </button>
+    </div>
+  } @else if (tournament) {
+    <!-- Tournament header -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <h1 class="h3 mb-0">Tournament · started {{ tournament.startedAt | date: 'dd/MM HH:mm' }}</h1>
+      <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
+    </div>
 
-  <div class="row g-3">
-    @for (pokemon of sortedStandings; track pokemon.id) {
-      <div class="col-lg-3 col-md-4 col-sm-6">
-        <app-pokemon-card [pokemon]="pokemon" [showBattleHistory]="false"></app-pokemon-card>
+    <!-- Round panel -->
+    <div class="card border-secondary mb-4 round-panel">
+      <div class="card-body text-center text-muted py-4">
+        <i class="fas fa-hourglass-half me-2"></i>
+        No Rounds yet
       </div>
-    }
-  </div>
+    </div>
+
+    <!-- Standings -->
+    <h2 class="h4 mb-3">Standings</h2>
+    <app-sort-controls
+      [currentSortBy]="currentSortBy"
+      [currentSortDirection]="currentSortDirection"
+      (sortChange)="onSortChange($event)">
+    </app-sort-controls>
+
+    <div class="row g-3">
+      @for (pokemon of sortedStandings; track pokemon.id) {
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <app-pokemon-card [pokemon]="pokemon" [showBattleHistory]="false"></app-pokemon-card>
+        </div>
+      }
+    </div>
+  }
 }

@@ -92,11 +92,12 @@ public class TournamentService : ITournamentService
     /// Gets a round-by-round Tournament held in memory.
     /// </summary>
     /// <param name="id">The Tournament's id</param>
-    /// <returns>The Tournament with its current Standings, or null when none is held under that id</returns>
-    public TournamentDto? GetTournament(Guid id)
+    /// <returns>The Tournament with its current Standings</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    public TournamentDto GetTournament(Guid id)
     {
-        var tournament = _tournamentRepository.Get(id);
-        return tournament is null ? null : TournamentDto.From(tournament);
+        var tournament = _tournamentRepository.Get(id) ?? throw new TournamentNotFoundException(id);
+        return TournamentDto.From(tournament);
     }
 
     private IEnumerable<TournamentPokemon> SortPokemons(List<TournamentPokemon> pokemons, string sortBy, string direction)

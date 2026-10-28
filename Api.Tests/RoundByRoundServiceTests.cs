@@ -68,6 +68,22 @@ public class RoundByRoundServiceTests
         Assert.Empty(_repository.GetAll());
     }
 
+    /// <summary>
+    /// Verifies that asking for a Tournament the API doesn't hold is reported as an unknown Tournament.
+    /// </summary>
+    [Fact]
+    public void GetTournament_ShouldThrowTournamentNotFound_WhenTournamentIsUnknown()
+    {
+        // Arrange
+        var unknownId = Guid.NewGuid();
+
+        // Act
+        var getTournament = () => _service.GetTournament(unknownId);
+
+        // Assert
+        Assert.Throws<TournamentNotFoundException>(getTournament);
+    }
+
     private void ReturnFromPokeApi(List<TournamentPokemon> pokemons)
     {
         _pokemonApiClient

@@ -8,12 +8,12 @@
 
 **Status:** ready-for-agent
 
-- [ ] `GET /pokemon/tournament/{id}` with a well-formed Guid the API doesn't hold answers 404 `{ "error": "Tournament not found." }`.
-- [ ] A malformed id matches no route and answers 404 with an empty body.
-- [ ] The service reports an unknown Tournament distinctly, so the controller can map it to 404.
-- [ ] On the Tournament page, a 404 replaces the whole page with "This Tournament no longer exists. Tournaments are kept in memory only until the API restarts.", plus a [Tournament History] link and a [Start Tournament] button.
-- [ ] The 404 handling is shared within the Tournament page, so Process Round, Round chips and the Battle modal can route their 404s here.
-- [ ] Tests:
+- [x] `GET /pokemon/tournament/{id}` with a well-formed Guid the API doesn't hold answers 404 `{ "error": "Tournament not found." }`.
+- [x] A malformed id matches no route and answers 404 with an empty body.
+- [x] The service reports an unknown Tournament distinctly, so the controller can map it to 404.
+- [x] On the Tournament page, a 404 replaces the whole page with "This Tournament no longer exists. Tournaments are kept in memory only until the API restarts.", plus a [Tournament History] link and a [Start Tournament] button.
+- [x] The 404 handling is shared within the Tournament page, so Process Round, Round chips and the Battle modal can route their 404s here.
+- [x] Tests:
   - Service seam: an unknown Tournament is reported.
   - HTTP seam: both 404s.
   - Routed-pages seam: the page appears for a 404, and both of its actions work.

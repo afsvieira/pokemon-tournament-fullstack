@@ -5,19 +5,5 @@
     <p class="text-muted mb-0">Start a Tournament and play its 15 Rounds one at a time.</p>
   </div>
 
-  <button
-    type="button"
-    class="btn btn-primary btn-lg px-4 start-tournament"
-    [disabled]="isStarting"
-    (click)="startTournament()">
-    @if (isStarting) {
-      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-      Starting...
-    } @else {
-      <i class="fas fa-play me-2"></i>
-      Start Tournament
-    }
-  </button>
+  <app-start-tournament-button></app-start-tournament-button>
 </div>
-
-<app-error-toast [message]="toastMessage" (dismissed)="hideToast()"></app-error-toast>

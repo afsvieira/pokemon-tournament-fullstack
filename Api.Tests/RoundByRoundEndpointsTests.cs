@@ -88,6 +88,42 @@ public class RoundByRoundEndpointsTests
             await response.Content.ReadAsStringAsync());
     }
 
+    /// <summary>
+    /// Verifies that a well-formed id the API doesn't hold answers 404 with a generic error.
+    /// </summary>
+    [Fact]
+    public async Task GetTournament_ShouldReturn404WithError_WhenTournamentIsUnknown()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.GetAsync($"{TestApi.TournamentUrl}/{Guid.NewGuid()}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("""{"error":"Tournament not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that an id that isn't a Guid matches no route, so it answers 404 with an empty body.
+    /// </summary>
+    [Fact]
+    public async Task GetTournament_ShouldReturn404WithEmptyBody_WhenIdIsMalformed()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.GetAsync($"{TestApi.TournamentUrl}/not-a-guid");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Empty(await response.Content.ReadAsStringAsync());
+    }
+
     private static async Task<JsonElement> ReadJsonAsync(HttpResponseMessage response)
     {
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

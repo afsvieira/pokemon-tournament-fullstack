@@ -1,6 +1,7 @@
 @use '../../shared/buttons' as *;
 
-// Tournament History page styles
+// Start Tournament button - the gradient primary button
+
 .btn-primary {
   @include primary-button;
 }
