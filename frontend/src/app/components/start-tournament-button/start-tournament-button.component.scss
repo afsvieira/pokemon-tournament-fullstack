@@ -1,0 +1,7 @@
+@use '../../shared/buttons' as *;
+
+// Start Tournament button - the gradient primary button
+
+.btn-primary {
+  @include primary-button;
+}

@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 import { BattleHistoryModalComponent } from '../battle-history-modal/battle-history-modal.component';
-import { Icons } from '../../models/icons.mapping';
+import { getTypeIconClass } from '../../models/icons.mapping';
 
 @Component({
   selector: 'app-pokemon-card',
@@ -13,6 +13,8 @@ import { Icons } from '../../models/icons.mapping';
 })
 export class PokemonCardComponent {
   @Input({ required: true }) pokemon!: TournamentPokemon;
+  /** Shows the "View Battles" button; round-by-round pages hide it, since their Round panel lists the Battles */
+  @Input() showBattleHistory = true;
   showModal = false;
 
   openModal(): void {
@@ -20,6 +22,6 @@ export class PokemonCardComponent {
   }
 
   getTypeIcon(type: string): string {
-    return Icons[type.toLowerCase()] || 'fa-solid fa-question';
+    return getTypeIconClass(type);
   }
 }

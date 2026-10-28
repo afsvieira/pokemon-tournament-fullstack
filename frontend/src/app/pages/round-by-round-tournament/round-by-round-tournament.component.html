@@ -1,0 +1,112 @@
+@if (isTournamentGone) {
+  <!-- Tournament gone: after an API restart, with a stale link or with a malformed id -->
+  <div class="tournament-gone text-center py-5">
+    <div class="fs-1 mb-3"><i class="fas fa-ghost"></i></div>
+    <h1 class="h3 mb-2">This Tournament no longer exists.</h1>
+    <p class="text-muted mb-4">Tournaments are kept in memory only until the API restarts.</p>
+    <div class="d-flex flex-wrap justify-content-center align-items-center gap-3">
+      <a routerLink="/round-by-round" class="btn btn-outline-secondary btn-lg px-4">
+        <i class="fas fa-list-ol me-2"></i>
+        Tournament History
+      </a>
+      <app-start-tournament-button></app-start-tournament-button>
+    </div>
+  </div>
+} @else {
+  <!-- Back to the Tournament History -->
+  <a routerLink="/round-by-round" class="back-link d-inline-flex align-items-center mb-3">
+    <i class="fas fa-arrow-left me-2"></i>
+    Tournament History
+  </a>
+
+  @if (isLoading) {
+    <div class="text-center text-muted py-5">
+      <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+      Loading Tournament...
+    </div>
+  } @else if (loadErrorMessage) {
+    <!-- Load error: replaces the page so it doesn't read as an empty Tournament -->
+    <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-3 load-error" role="alert">
+      <span>
+        <i class="fas fa-exclamation-triangle me-2"></i>
+        {{ loadErrorMessage }}
+      </span>
+      <button type="button" class="btn btn-outline-danger btn-sm" (click)="loadTournament()">
+        <i class="fas fa-rotate-right me-1"></i>
+        Retry
+      </button>
+    </div>
+  } @else if (tournament) {
+    <!-- Tournament header with Process Round, or the Complete badge after Round 15 -->
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+      <h1 class="h3 mb-0">Tournament · started {{ tournament.startedAt | date: 'dd/MM HH:mm' }}</h1>
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
+        @if (isComplete) {
+          <span class="badge rounded-pill text-bg-success fs-6 px-3 py-2 complete-badge">✔ Complete</span>
+        } @else {
+          <button
+            type="button"
+            class="btn btn-primary px-4 process-round"
+            [disabled]="isProcessing"
+            (click)="processRound()">
+            @if (isProcessing) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Processing...
+            } @else {
+              <i class="fas fa-forward-step me-2"></i>
+              Process Round
+            }
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Round chips: played Rounds can be reopened, the ones still to come are disabled -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <span class="text-muted me-1">Rounds:</span>
+      @for (roundNumber of roundNumbers; track roundNumber) {
+        <button
+          type="button"
+          class="btn btn-sm rounded-pill round-chip"
+          [class.btn-primary]="isRoundSelected(roundNumber)"
+          [class.btn-outline-secondary]="!isRoundSelected(roundNumber)"
+          [attr.aria-pressed]="isRoundSelected(roundNumber)"
+          [disabled]="!isRoundPlayed(roundNumber)"
+          (click)="selectRound(roundNumber)">
+          {{ roundNumber }}
+        </button>
+      }
+    </div>
+
+    <app-round-panel [round]="currentRound" (battleSelected)="openBattle($event)"></app-round-panel>
+
+    @if (openBattleId !== null) {
+      <app-battle-modal
+        [tournamentId]="tournament.id"
+        [battleId]="openBattleId"
+        (closeModal)="closeBattle()"
+        (tournamentGone)="showTournamentGone()">
+      </app-battle-modal>
+    }
+
+    <!-- Standings -->
+    <h2 class="h4 mb-3">Standings</h2>
+    <app-sort-controls
+      [currentSortBy]="currentSortBy"
+      [currentSortDirection]="currentSortDirection"
+      (sortChange)="onSortChange($event)">
+    </app-sort-controls>
+
+    <div class="row g-3">
+      @for (pokemon of sortedStandings; track pokemon.id) {
+        <div class="col-lg-3 col-md-4 col-sm-6">
+          <app-pokemon-card [pokemon]="pokemon" [showBattleHistory]="false"></app-pokemon-card>
+        </div>
+      }
+    </div>
+  }
+}
+
+<!-- Kept outside the page states, so a 409's toast survives the reload it triggers -->
+<app-error-toast [message]="toastMessage" (dismissed)="hideToast()"></app-error-toast>

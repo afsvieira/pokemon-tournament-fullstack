@@ -11,6 +11,6 @@ public interface IPokemonApiClient
     /// Fetches a random selection of unique Pokémon.
     /// </summary>
     /// <param name="count">Number of unique Pokémon to fetch</param>
-    /// <returns>List of Pokémon with basic attributes</returns>
+    /// <returns>New Pokémon objects with basic attributes, safe for the caller to change</returns>
     Task<List<TournamentPokemon>> FetchRandomPokemonsAsync(int count = 16);
 }

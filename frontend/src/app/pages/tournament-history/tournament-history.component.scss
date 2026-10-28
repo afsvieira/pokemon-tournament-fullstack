@@ -1,0 +1,11 @@
+// Tournament History page - the History table, framed like the Round panel
+.history-card {
+  border-width: 2px;
+  border-radius: 16px;
+  background: transparent;
+  overflow: hidden;
+
+  .table {
+    --bs-table-bg: transparent;
+  }
+}

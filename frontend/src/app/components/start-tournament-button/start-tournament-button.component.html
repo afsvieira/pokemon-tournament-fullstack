@@ -1,0 +1,16 @@
+<!-- Start Tournament - starts a Tournament and opens its page -->
+<button
+  type="button"
+  class="btn btn-primary btn-lg px-4 start-tournament"
+  [disabled]="isStarting"
+  (click)="startTournament()">
+  @if (isStarting) {
+    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+    Starting...
+  } @else {
+    <i class="fas fa-play me-2"></i>
+    Start Tournament
+  }
+</button>
+
+<app-error-toast [message]="toastMessage" (dismissed)="hideToast()"></app-error-toast>

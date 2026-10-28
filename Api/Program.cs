@@ -1,7 +1,7 @@
 using Api.Application;
 using Api.Domain;
 using Api.Infrastructure;
-using System.Threading.RateLimiting;
+using Api.Shared;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,27 +38,25 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Register application services
+// Singleton cache of PokéAPI data, shared by the transient typed client below
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<IPokemonApiClient, PokemonApiClient>();
 builder.Services.AddScoped<BattleSimulator>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
+builder.Services.AddSingleton<ITournamentRepository, InMemoryTournamentRepository>();
+builder.Services.AddSingleton(TimeProvider.System);
 
 // Configure rate limiting
 builder.Services.AddRateLimiter(options =>
 {
     // Rejected requests default to 503; 429 tells clients to slow down rather than that the service is down
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    options.AddPolicy("TournamentPolicy", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 10,
-                Window = TimeSpan.FromMinutes(1),
-                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 5
-            }));
 });
+
+// Each policy's numbers live in the RateLimiting section of appsettings.json
+builder.Services.AddFixedWindowRateLimitPolicy(RateLimitPolicies.InstantSimulation);
+builder.Services.AddFixedWindowRateLimitPolicy(RateLimitPolicies.StartTournament);
+builder.Services.AddFixedWindowRateLimitPolicy(RateLimitPolicies.RoundByRound);
 
 // Configure CORS for Angular frontend (localhost:4200)
 builder.Services.AddCors(options =>

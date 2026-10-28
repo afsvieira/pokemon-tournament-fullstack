@@ -44,6 +44,19 @@ describe('AppComponent', () => {
   });
 
   /**
+   * Tests that the nav links to both flows.
+   */
+  it('should link to the Instant Simulation and Round by Round', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+
+    const links = Array.from(fixture.nativeElement.querySelectorAll('nav a') as NodeListOf<HTMLAnchorElement>);
+
+    expect(links.map(link => link.textContent?.trim())).toEqual(['Instant Simulation', 'Round by Round']);
+    expect(links.map(link => link.getAttribute('href'))).toEqual(['/tournament', '/round-by-round']);
+  });
+
+  /**
    * Tests theme toggle functionality.
    */
   it('should toggle theme when button is clicked', () => {

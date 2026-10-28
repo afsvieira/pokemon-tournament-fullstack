@@ -1,5 +1,6 @@
 using Api.Application;
 using Api.Domain;
+using Api.Infrastructure;
 using Moq;
 
 namespace Api.Tests;
@@ -23,7 +24,8 @@ public class ValidationTests
                 new() { Id = 7, Name = "squirtle", Type = "water", BaseExperience = 63 }
             });
 
-        _service = new TournamentService(pokemonApiClient.Object, new BattleSimulator());
+        _service = new TournamentService(
+            pokemonApiClient.Object, new BattleSimulator(), new InMemoryTournamentRepository(), TimeProvider.System);
     }
 
     /// <summary>
