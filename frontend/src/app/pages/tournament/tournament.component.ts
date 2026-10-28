@@ -126,6 +126,9 @@ export class TournamentComponent {
     if (error.status === 404) {
       return 'API endpoint not found. Please check the server configuration.';
     }
+    if (error.status === 429) {
+      return 'Too many requests. Please wait a minute and try again.';
+    }
     if (error.status >= 400) {
       return 'Invalid request. Please try again.';
     }

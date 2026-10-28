@@ -142,7 +142,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
 - **Input Validation**: Rejects missing or unknown `sortBy` and unknown `sortDirection` with `400`
-- **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected
+- **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected with `429`
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
@@ -160,7 +160,8 @@ dotnet test
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
-- **Total: 20 tests**
+- Rate limiting through the real HTTP pipeline (1 test)
+- **Total: 21 tests**
 
 ### Run Frontend Tests
 
@@ -178,9 +179,9 @@ npx ng test --watch=false --browsers=ChromeHeadless
 **Test Coverage:**
 - UI components: pokemon card (6), sort controls (5), battle history modal (2), rules modal (1)
 - App shell and theme toggle (4 tests)
-- Tournament page (2 tests)
+- Tournament page, including the rate-limit error message (3 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 22 tests**
+- **Total: 23 tests**
 
 ## 🛠️ Development
 
@@ -246,11 +247,11 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
-- **503 Service Unavailable**: Rate limit exceeded and the queue is full (the rate limiter's default rejection status)
+- **429 Too Many Requests**: Rate limit exceeded and the queue is full
 - **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable
 
 ### Frontend Errors
-- **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status
+- **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429`
 - **Loading States**: Spinners and disabled buttons
 
 ## 📝 Notes
