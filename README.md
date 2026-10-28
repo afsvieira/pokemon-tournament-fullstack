@@ -142,6 +142,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
 - **Input Validation**: Rejects missing or unknown `sortBy` and unknown `sortDirection` with `400`
+- **PokéAPI Cache**: Each Pokémon's data is cached in memory after its first fetch, as PokéAPI's [fair use policy](https://pokeapi.co/docs/v2) asks; the 16 Pokémon are still drawn at random on every call
 - **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected with `429`. The numbers are set in configuration (see [Rate Limit Configuration](#rate-limit-configuration))
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
@@ -161,7 +162,8 @@ dotnet test
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
 - Rate limiting and its configuration through the real HTTP pipeline (6 tests)
-- **Total: 26 tests**
+- PokéAPI client and its cache, with PokéAPI stubbed (4 tests)
+- **Total: 30 tests**
 
 ### Run Frontend Tests
 
@@ -194,7 +196,7 @@ pokemon-tournament-fullstack/
 │   ├── Controllers/              # HTTP endpoint and query validation
 │   ├── Application/              # Tournament service and the interfaces it depends on
 │   ├── Domain/                   # Battle rules, domain models and enums
-│   ├── Infrastructure/           # PokéAPI HTTP client
+│   ├── Infrastructure/           # PokéAPI HTTP client and its cache
 │   ├── Dtos/                     # PokéAPI response shapes
 │   ├── Shared/                   # String helpers and rate-limit policy setup
 │   └── Program.cs                # DI, rate limiting, CORS, Swagger
@@ -254,7 +256,7 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 
 ## 📊 Performance
 
-- **API Response Time**: Usually well under a second; the 16 PokéAPI requests run in parallel
+- **API Response Time**: Usually well under a second; PokéAPI is only called for Pokémon not yet cached, and those requests run in parallel. Once all 151 are cached, a call never reaches PokéAPI
 - **Battle Simulation**: 120 battles processed in <1ms
 - **Re-sorting**: Changing the sort order re-sorts the loaded results in the browser without calling the API again
 - **Bundle Size**: ~712 kB initial bundle in a production build (~148 kB transferred), including Bootstrap and Font Awesome
@@ -264,7 +266,7 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
 - **429 Too Many Requests**: Rate limit exceeded and the queue is full
-- **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable
+- **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable for a Pokémon not yet cached
 
 ### Frontend Errors
 - **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429`
@@ -272,7 +274,7 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 
 ## 📝 Notes
 
-- Pokémon data is fetched from PokéAPI (IDs 1-151, Kanto region only)
+- Pokémon data is fetched from PokéAPI (IDs 1-151, Kanto region only) and cached in memory until the API restarts
 - Battle results are deterministic based on type and base experience
 - All 16 Pokémon are guaranteed to be unique in each tournament
 - Win rate is calculated as: (wins ÷ total battles) × 100

@@ -38,6 +38,8 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Register application services
+// Singleton cache of PokéAPI data, shared by the transient typed client below
+builder.Services.AddMemoryCache();
 builder.Services.AddHttpClient<IPokemonApiClient, PokemonApiClient>();
 builder.Services.AddScoped<BattleSimulator>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
