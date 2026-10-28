@@ -6,7 +6,7 @@ Every decision `/to-spec` needs to write `.scratch/round-by-round-tournament/spe
 
 ## Notes
 
-- Source of truth: `docs/assessment-v2.pdf`. Scope is what it asks for, what reaching it requires, and cheap performance improvements. Nothing else: keep the solution simple.
+- Source of truth: `docs/assessment-v2.pdf`. Scope is what it asks for and what reaching it requires, plus cheap performance improvements: those are this effort's addition, not something the PDF asks for, and the PR must name them as extras. Nothing else: keep the solution simple.
 - The Instant Simulation (`GET /pokemon/tournament/statistics` and the `/tournament` page) keeps its contract, behaviour and rate limit: existing customers rely on it.
 - The battle rules stay as they are (`BattleSimulator.DetermineBattleOutcome`).
 - Vocabulary: `GLOSSARY.md`. Code context: `.claude/ARCHITECTURE.md`. Conventions: the `coding-standards` skill.

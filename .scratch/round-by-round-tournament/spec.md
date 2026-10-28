@@ -17,7 +17,7 @@ Add a round-by-round Tournament that the user runs and watches step by step, whi
 - **Process Round**: resolves the next of the 15 Rounds. The 16 Pokémon are paired into 8 Battles, the existing battle rules decide each one, and the page shows that Round's results and the updated Standings.
 - **Review**: the user can go back to any earlier Round, open any single Battle, and browse the Tournament History, the Tournaments started since the API last started. From the History they can reopen a Tournament, and resume it if it isn't Complete.
 
-The API exposes this through new endpoints under `pokemon/tournament`, and the frontend talks to them through a typed service. Two cheap improvements ship with it:
+The API exposes this through new endpoints under `pokemon/tournament`, and the frontend talks to them through a typed service. Two cheap improvements ship with it, neither asked for by the PDF (see the map's Notes), and the PR names them as extras:
 
 - an in-memory cache of PokéAPI responses, shared with the Instant Simulation;
 - rate limits suited to each new endpoint, with every rate limit's numbers moved to configuration.
