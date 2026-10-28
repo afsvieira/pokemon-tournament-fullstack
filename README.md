@@ -276,11 +276,12 @@ dotnet test
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
+- Instant Simulation endpoint contract through the real HTTP pipeline: the response shape existing customers rely on, and the 400 body (2 tests)
 - Round-by-round service operations, with PokéAPI and the clock faked: Start, the 15-Round schedule, Standings, Complete, parallel Process Round, unknown Tournaments, Rounds and Battles, and the Tournament History (12 tests)
 - Round-by-round endpoints through the real HTTP pipeline (19 tests)
 - Rate limiting and its configuration through the real HTTP pipeline (9 tests)
 - PokéAPI client and its cache, with PokéAPI stubbed (4 tests)
-- **Total: 64 tests**
+- **Total: 66 tests**
 
 ### Run Frontend Tests
 
