@@ -1,6 +1,6 @@
 # Pokémon Tournament Simulator
 
-A full-stack application that simulates Pokémon battles in a tournament format, built with .NET 8 API and Angular 18 frontend.
+A full-stack application that simulates Pokémon battles in a tournament format, built with .NET 10 API and Angular 18 frontend.
 
 ## 🎯 Project Overview
 
@@ -8,7 +8,7 @@ This application fetches 16 random Pokémon from the first generation (Kanto reg
 
 ## 🏗️ Architecture
 
-- **Backend**: ASP.NET Core Web API (.NET 8) with controllers, split into Controllers, Application, Domain and Infrastructure layers
+- **Backend**: ASP.NET Core Web API (.NET 10) with controllers, split into Controllers, Application, Domain and Infrastructure layers
 - **Frontend**: Angular 18 with standalone components
 - **External API**: PokéAPI (https://pokeapi.co)
 - **Styling**: Bootstrap 5 with custom SCSS
@@ -18,8 +18,7 @@ This application fetches 16 random Pokémon from the first generation (Kanto reg
 
 ### Prerequisites
 
-- .NET 8 SDK
-- .NET 9 runtime, needed only to run the API tests (see [Run API Tests](#run-api-tests))
+- .NET 10 SDK
 - Node.js 18+ and npm
 - Git
 
@@ -144,12 +143,6 @@ cd Api.Tests
 dotnet test
 ```
 
-`Api.Tests` targets .NET 9 while `Api` targets .NET 8 ([#10](https://github.com/afsvieira/pokemon-tournament-fullstack/issues/10)). Without a .NET 9 runtime, let the test host roll forward to a newer one:
-
-```bash
-DOTNET_ROLL_FORWARD=Major dotnet test
-```
-
 **Test Coverage:**
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
@@ -177,7 +170,7 @@ npm test
 ```
 pokemon-tournament-fullstack/
 ├── .claude/skills/               # Claude Code agent skills used in this repo
-├── Api/                          # .NET 8 Web API
+├── Api/                          # .NET 10 Web API
 │   ├── Controllers/              # HTTP endpoint and query validation
 │   ├── Application/              # Tournament orchestration (service + interface)
 │   ├── Domain/                   # Battle rules, domain models and enums
@@ -198,7 +191,7 @@ pokemon-tournament-fullstack/
 ### Key Technologies
 
 **Backend:**
-- ASP.NET Core 8 Web API with controllers
+- ASP.NET Core 10 Web API with controllers
 - System.Text.Json for serialization (enums as strings)
 - Typed HttpClient for external API calls
 - Swashbuckle for Swagger/OpenAPI
