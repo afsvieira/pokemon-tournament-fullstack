@@ -146,7 +146,7 @@ dotnet test
 **Test Coverage:**
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
-- Service input validation (4 tests), which currently pass even without validation ([#9](https://github.com/afsvieira/pokemon-tournament-fullstack/issues/9))
+- Service input validation, with PokéAPI faked (4 tests)
 - **Total: 20 tests**
 
 ### Run Frontend Tests
@@ -172,7 +172,7 @@ pokemon-tournament-fullstack/
 ├── .claude/skills/               # Claude Code agent skills used in this repo
 ├── Api/                          # .NET 10 Web API
 │   ├── Controllers/              # HTTP endpoint and query validation
-│   ├── Application/              # Tournament orchestration (service + interface)
+│   ├── Application/              # Tournament service and the interfaces it depends on
 │   ├── Domain/                   # Battle rules, domain models and enums
 │   ├── Infrastructure/           # PokéAPI HTTP client
 │   ├── Dtos/                     # PokéAPI response shapes

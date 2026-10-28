@@ -1,5 +1,4 @@
 using Api.Domain;
-using Api.Infrastructure;
 using Api.Shared;
 
 namespace Api.Application;
@@ -9,10 +8,10 @@ namespace Api.Application;
 /// </summary>
 public class TournamentService : ITournamentService
 {
-    private readonly PokemonApiClient _pokemonApiClient;
+    private readonly IPokemonApiClient _pokemonApiClient;
     private readonly BattleSimulator _battleSimulator;
 
-    public TournamentService(PokemonApiClient pokemonApiClient, BattleSimulator battleSimulator)
+    public TournamentService(IPokemonApiClient pokemonApiClient, BattleSimulator battleSimulator)
     {
         _pokemonApiClient = pokemonApiClient;
         _battleSimulator = battleSimulator;

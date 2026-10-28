@@ -38,7 +38,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Register application services
-builder.Services.AddHttpClient<PokemonApiClient>();
+builder.Services.AddHttpClient<IPokemonApiClient, PokemonApiClient>();
 builder.Services.AddScoped<BattleSimulator>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
 

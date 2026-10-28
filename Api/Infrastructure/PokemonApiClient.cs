@@ -1,3 +1,4 @@
+using Api.Application;
 using Api.Domain;
 using Api.Dtos;
 
@@ -6,7 +7,7 @@ namespace Api.Infrastructure;
 /// <summary>
 /// Client responsible for fetching Pokémon data from the external PokéAPI.
 /// </summary>
-public class PokemonApiClient
+public class PokemonApiClient : IPokemonApiClient
 {
     private readonly HttpClient _httpClient;
 
@@ -21,7 +22,7 @@ public class PokemonApiClient
     /// </summary>
     /// <param name="count">Number of unique Pokémon to fetch</param>
     /// <returns>List of Pokémon with basic attributes</returns>
-    public async Task<List<TournamentPokemon>> FetchRandomPokemonsAsync(int count = 16)
+    public async Task<List<TournamentPokemon>> FetchRandomPokemonsAsync(int count)
     {
         var selectedIds = GenerateUniqueRandomIds(count, 1, 151);
         var tasks = selectedIds.Select(id => _httpClient.GetFromJsonAsync<PokemonResponseDto>($"{id}")).ToArray();
