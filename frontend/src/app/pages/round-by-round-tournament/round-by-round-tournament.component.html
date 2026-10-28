@@ -62,7 +62,33 @@
       </div>
     </div>
 
-    <app-round-panel [round]="currentRound"></app-round-panel>
+    <!-- Round chips: played Rounds can be reopened, the ones still to come are disabled -->
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <span class="text-muted me-1">Rounds:</span>
+      @for (roundNumber of roundNumbers; track roundNumber) {
+        <button
+          type="button"
+          class="btn btn-sm rounded-pill round-chip"
+          [class.btn-primary]="isRoundSelected(roundNumber)"
+          [class.btn-outline-secondary]="!isRoundSelected(roundNumber)"
+          [attr.aria-pressed]="isRoundSelected(roundNumber)"
+          [disabled]="!isRoundPlayed(roundNumber)"
+          (click)="selectRound(roundNumber)">
+          {{ roundNumber }}
+        </button>
+      }
+    </div>
+
+    <app-round-panel [round]="currentRound" (battleSelected)="openBattle($event)"></app-round-panel>
+
+    @if (openBattleId !== null) {
+      <app-battle-modal
+        [tournamentId]="tournament.id"
+        [battleId]="openBattleId"
+        (closeModal)="closeBattle()"
+        (tournamentGone)="showTournamentGone()">
+      </app-battle-modal>
+    }
 
     <!-- Standings -->
     <h2 class="h4 mb-3">Standings</h2>

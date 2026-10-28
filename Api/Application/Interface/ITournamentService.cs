@@ -50,4 +50,14 @@ public interface ITournamentService
     /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
     /// <exception cref="RoundNotFoundException">When the Round is outside 1–15 or hasn't been played yet</exception>
     RoundDto GetRound(Guid id, int roundNumber);
+
+    /// <summary>
+    /// Gets a played Battle of a Tournament.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <param name="battleId">The Battle's number within the Tournament, 1 to 120</param>
+    /// <returns>The Battle with both Pokémon and its winner</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    /// <exception cref="BattleNotFoundException">When the Battle is outside 1–120 or hasn't been played yet</exception>
+    BattleDto GetBattle(Guid id, int battleId);
 }

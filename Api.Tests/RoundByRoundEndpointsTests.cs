@@ -283,6 +283,74 @@ public class RoundByRoundEndpointsTests
         Assert.Equal("""{"error":"Tournament not found."}""", await response.Content.ReadAsStringAsync());
     }
 
+    /// <summary>
+    /// Verifies that a played Battle answers 200 with the Battle's camelCase shape,
+    /// the same Battle that Process Round returned.
+    /// </summary>
+    [Fact]
+    public async Task GetBattle_ShouldReturn200WithTheBattle_WhenItWasPlayed()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+        var tournamentUrl = await StartTournamentAsync(client);
+        using var processResponse = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+        var processedRound = await ReadJsonAsync(processResponse);
+
+        // Act
+        using var response = await client.GetAsync($"{tournamentUrl}/battles/3");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var battle = await ReadJsonAsync(response);
+        Assert.Equal(BattleProperties, PropertyNames(battle));
+        Assert.Equal(3, battle.GetProperty("id").GetInt32());
+        Assert.Equal(processedRound.GetProperty("battles")[2].GetRawText(), battle.GetRawText());
+    }
+
+    /// <summary>
+    /// Verifies that a Battle outside 1–120, or not played yet, answers 404 with a generic error.
+    /// </summary>
+    /// <param name="battleId">A Battle id with no played Battle behind it, once Round 1 (Battles 1–8) is played</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(9)]
+    [InlineData(121)]
+    public async Task GetBattle_ShouldReturn404WithError_WhenBattleWasNotPlayed(int battleId)
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+        var tournamentUrl = await StartTournamentAsync(client);
+        using var processResponse = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+
+        // Act
+        using var response = await client.GetAsync($"{tournamentUrl}/battles/{battleId}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("""{"error":"Battle not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that asking for a Battle of a Tournament the API doesn't hold answers 404 "Tournament not found.",
+    /// not "Battle not found.".
+    /// </summary>
+    [Fact]
+    public async Task GetBattle_ShouldReturn404WithTournamentError_WhenTournamentIsUnknown()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.GetAsync($"{TestApi.TournamentUrl}/{Guid.NewGuid()}/battles/1");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("""{"error":"Tournament not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
     private static async Task<string> StartTournamentAsync(HttpClient client)
     {
         using var response = await client.PostAsync(TestApi.TournamentUrl, content: null);

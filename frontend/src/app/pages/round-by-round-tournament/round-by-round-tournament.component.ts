@@ -3,7 +3,7 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { map, of, switchMap } from 'rxjs';
+import { Subscription, map, of, switchMap } from 'rxjs';
 import { Tournament } from '../../models/tournament.model';
 import { Round } from '../../models/round.model';
 import { TournamentPokemon } from '../../models/tournament-pokemon.model';
@@ -14,6 +14,7 @@ import { SortControlsComponent } from '../../components/sort-controls/sort-contr
 import { StartTournamentButtonComponent } from '../../components/start-tournament-button/start-tournament-button.component';
 import { RoundPanelComponent } from '../../components/round-panel/round-panel.component';
 import { ErrorToastComponent } from '../../components/error-toast/error-toast.component';
+import { BattleModalComponent } from '../../components/battle-modal/battle-modal.component';
 import { getErrorMessage } from '../../shared/error-message';
 
 @Component({
@@ -26,7 +27,8 @@ import { getErrorMessage } from '../../shared/error-message';
     SortControlsComponent,
     StartTournamentButtonComponent,
     RoundPanelComponent,
-    ErrorToastComponent
+    ErrorToastComponent,
+    BattleModalComponent
   ],
   templateUrl: './round-by-round-tournament.component.html',
   styleUrl: './round-by-round-tournament.component.scss'
@@ -36,6 +38,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
 
   tournament: Tournament | null = null;
   currentRound: Round | null = null;
+  /** The Battle open in the modal, or null while the modal is closed */
+  openBattleId: number | null = null;
   isLoading = false;
   isProcessing = false;
   toastMessage = '';
@@ -45,6 +49,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
   currentSortDirection: SortDirection = SortDirection.desc;
 
   private tournamentId = '';
+  /** Rounds fetched or played so far, by number; a played Round never changes, so each is fetched once */
+  private readonly playedRounds = new Map<number, Round>();
+  /** A chip's Round still loading; dropped when another Round takes the panel, so its late answer can't replace it */
+  private roundRequest?: Subscription;
 
   constructor(
     private route: ActivatedRoute,
@@ -58,6 +66,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
         this.tournamentId = params.get('id')!;
+        this.playedRounds.clear();
+        this.openBattleId = null;
         this.loadTournament();
       });
   }
@@ -74,6 +84,27 @@ export class RoundByRoundTournamentComponent implements OnInit {
    */
   get isComplete(): boolean {
     return this.tournament?.roundsPlayed === this.roundCount;
+  }
+
+  /**
+   * One chip per Round, 1 to 15
+   */
+  get roundNumbers(): number[] {
+    return Array.from({ length: this.roundCount }, (_, index) => index + 1);
+  }
+
+  /**
+   * Whether a Round has been played, so its chip can be clicked
+   */
+  isRoundPlayed(roundNumber: number): boolean {
+    return roundNumber <= (this.tournament?.roundsPlayed ?? 0);
+  }
+
+  /**
+   * Whether a Round is the one shown in the Round panel, so its chip is highlighted
+   */
+  isRoundSelected(roundNumber: number): boolean {
+    return this.currentRound?.roundNumber === roundNumber;
   }
 
   /**
@@ -102,6 +133,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
     this.isLoading = true;
     this.loadErrorMessage = '';
     this.isTournamentGone = false;
+    this.roundRequest?.unsubscribe();
 
     this.roundByRoundService.getTournament(this.tournamentId).pipe(
       switchMap((tournament) => tournament.roundsPlayed === 0
@@ -111,7 +143,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
     ).subscribe({
       next: ({ tournament, lastRound }) => {
         this.tournament = tournament;
-        this.currentRound = lastRound;
+        this.showRound(lastRound);
         this.isLoading = false;
         onLoaded?.();
       },
@@ -134,7 +166,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
 
     this.roundByRoundService.processRound(this.tournamentId).subscribe({
       next: (processedRound) => {
-        this.currentRound = { roundNumber: processedRound.roundNumber, battles: processedRound.battles };
+        this.roundRequest?.unsubscribe();
+        this.showRound({ roundNumber: processedRound.roundNumber, battles: processedRound.battles });
         this.tournament = {
           ...this.tournament!,
           roundsPlayed: processedRound.roundNumber,
@@ -158,6 +191,44 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
+   * Shows a played Round in the Round panel, fetching it the first time only; the cards keep the current Standings.
+   * A failure shows a toast and keeps the Round that was selected.
+   * @param roundNumber - The chip's Round number
+   */
+  selectRound(roundNumber: number): void {
+    this.roundRequest?.unsubscribe();
+    const playedRound = this.playedRounds.get(roundNumber);
+    if (playedRound) {
+      this.showRound(playedRound);
+      return;
+    }
+
+    this.roundRequest = this.roundByRoundService.getRound(this.tournamentId, roundNumber).subscribe({
+      next: (round) => this.showRound(round),
+      error: (error: HttpErrorResponse) => {
+        if (!this.handledAsTournamentGone(error)) {
+          this.toastMessage = getErrorMessage(error);
+        }
+      }
+    });
+  }
+
+  /**
+   * Opens a Battle in the modal, which fetches it
+   * @param battleId - The clicked row's Battle id
+   */
+  openBattle(battleId: number): void {
+    this.openBattleId = battleId;
+  }
+
+  /**
+   * Closes the Battle modal
+   */
+  closeBattle(): void {
+    this.openBattleId = null;
+  }
+
+  /**
    * Clears the toast once it is closed or hides itself
    */
   hideToast(): void {
@@ -165,7 +236,17 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * Replaces the whole page with "This Tournament no longer exists" when the API answers 404.
+   * Replaces the whole page, and the Battle modal if open, with "This Tournament no longer exists";
+   * also what the Battle modal asks for when its Battle answers 404
+   */
+  showTournamentGone(): void {
+    this.isTournamentGone = true;
+    this.openBattleId = null;
+    this.toastMessage = '';
+  }
+
+  /**
+   * Shows that the Tournament no longer exists when the API answers 404.
    * Every request this page makes gets a 404 once the API has restarted, so each one routes its errors here first.
    * @param error - The failed request's error response
    * @returns Whether the error was a 404, now handled; otherwise the caller shows the error its own way
@@ -174,9 +255,15 @@ export class RoundByRoundTournamentComponent implements OnInit {
     if (error.status !== HttpStatusCode.NotFound) {
       return false;
     }
-    this.isTournamentGone = true;
-    this.toastMessage = '';
+    this.showTournamentGone();
     return true;
+  }
+
+  private showRound(round: Round | null): void {
+    if (round) {
+      this.playedRounds.set(round.roundNumber, round);
+    }
+    this.currentRound = round;
   }
 
   private compareBySortField(a: TournamentPokemon, b: TournamentPokemon): number {

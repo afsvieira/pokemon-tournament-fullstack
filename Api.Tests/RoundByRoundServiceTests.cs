@@ -241,6 +241,24 @@ public class RoundByRoundServiceTests
         Assert.Throws<RoundNotFoundException>(getRound);
     }
 
+    /// <summary>
+    /// Verifies that asking for a Battle not played yet, the first of Round 2 once Round 1 is played,
+    /// is reported as an unknown Battle.
+    /// </summary>
+    [Fact]
+    public async Task GetBattle_ShouldThrowBattleNotFound_WhenBattleWasNotPlayed()
+    {
+        // Arrange
+        var tournament = await StartTournamentAsync(TestPokemon.FromIds(TestPokemon.SixteenIds));
+        PlayRounds(tournament.Id, 1);
+
+        // Act
+        var getBattle = () => _service.GetBattle(tournament.Id, 9);
+
+        // Assert
+        Assert.Throws<BattleNotFoundException>(getBattle);
+    }
+
     private async Task<TournamentDto> StartTournamentAsync(List<TournamentPokemon> pokemons)
     {
         ReturnFromPokeApi(pokemons);

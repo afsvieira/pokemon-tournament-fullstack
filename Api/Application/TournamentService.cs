@@ -147,6 +147,29 @@ public class TournamentService : ITournamentService
         }
     }
 
+    /// <summary>
+    /// Gets a played Battle of a Tournament.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <param name="battleId">The Battle's number within the Tournament, 1 to 120</param>
+    /// <returns>The Battle with both Pokémon and its winner</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    /// <exception cref="BattleNotFoundException">When the Battle is outside 1–120 or hasn't been played yet</exception>
+    public BattleDto GetBattle(Guid id, int battleId)
+    {
+        var tournament = GetStoredTournament(id);
+
+        lock (tournament.SyncRoot)
+        {
+            var battle = tournament.Rounds
+                .SelectMany(round => round.Battles)
+                .SingleOrDefault(battle => battle.Id == battleId)
+                ?? throw new BattleNotFoundException(id, battleId);
+
+            return BattleDto.From(battle, tournament);
+        }
+    }
+
     private Tournament GetStoredTournament(Guid id)
     {
         return _tournamentRepository.Get(id) ?? throw new TournamentNotFoundException(id);

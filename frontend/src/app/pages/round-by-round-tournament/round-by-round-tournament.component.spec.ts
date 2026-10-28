@@ -263,6 +263,188 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
+   * Verifies that the page shows one chip per Round, with only the played ones enabled and the last one selected,
+   * that a chip shows its Round while the header and cards stay current, and that each Round is fetched only once.
+   */
+  it('should select played Rounds with the chips, fetching each Round only once', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+    const chips = Array.from(page.querySelectorAll<HTMLButtonElement>('button.round-chip'));
+
+    expect(chips.map((chip) => chip.textContent?.trim())).toEqual(
+      Array.from({ length: 15 }, (_, index) => `${index + 1}`));
+    expect(chips.map((chip) => chip.disabled)).toEqual(
+      Array.from({ length: 15 }, (_, index) => index >= 3));
+    expect(selectedChip(page)).toBe('3');
+
+    chips[0].click();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/1` }).flush(createRound(1));
+    harness.detectChanges();
+
+    expect(selectedChip(page)).toBe('1');
+    expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 1');
+    expect(page.textContent).toContain('Round 3 of 15');
+    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+
+    chips[2].click();
+    harness.detectChanges();
+    chips[0].click();
+    harness.detectChanges();
+
+    httpMock.expectNone(`${tournamentUrl}/rounds/1`);
+    httpMock.expectNone(`${tournamentUrl}/rounds/3`);
+    expect(selectedChip(page)).toBe('1');
+    expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 1');
+  });
+
+  /**
+   * Verifies that Process Round selects and shows the Round it played, even while an earlier Round was selected.
+   */
+  it('should select the newest Round after Process Round', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 2 });
+    const page = harness.routeNativeElement!;
+    page.querySelectorAll<HTMLButtonElement>('button.round-chip')[0].click();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/1` }).flush(createRound(1));
+    harness.detectChanges();
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(3));
+    harness.detectChanges();
+
+    expect(selectedChip(page)).toBe('3');
+    expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 17');
+    expect(page.querySelectorAll<HTMLButtonElement>('button.round-chip')[2].disabled).toBeFalse();
+  });
+
+  /**
+   * Verifies that a chip's Round still loading when Process Round succeeds is dropped,
+   * so its late answer can't replace the newest Round.
+   */
+  it('should keep the newest Round selected when Process Round succeeds while a chip is still loading', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 2 });
+    const page = harness.routeNativeElement!;
+    page.querySelectorAll<HTMLButtonElement>('button.round-chip')[0].click();
+    const chipRequest = httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/1` });
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(3));
+    harness.detectChanges();
+
+    expect(chipRequest.cancelled).toBeTrue();
+    expect(selectedChip(page)).toBe('3');
+  });
+
+  /**
+   * Verifies that a chip whose Round fails to load shows a toast and leaves the selected Round as it was.
+   */
+  it('should show a toast and keep the selected Round when a chip fails to load its Round', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+
+    page.querySelectorAll<HTMLButtonElement>('button.round-chip')[0].click();
+    httpMock
+      .expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/1` })
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    expect(page.querySelector('.toast-body')?.textContent).toContain('Server error occurred. Please try again later.');
+    expect(selectedChip(page)).toBe('3');
+    expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 17');
+  });
+
+  /**
+   * Verifies that clicking a Battle row opens a modal that fetches the Battle and shows both Pokémon,
+   * with image, type and base experience, and the winner; and that the modal closes.
+   */
+  it('should open a Battle in a modal with both Pokémon and the winner', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+
+    page.querySelector<HTMLElement>('.battle-row')!.click();
+    harness.detectChanges();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/battles/17` }).flush(createRound(3).battles[0]);
+    harness.detectChanges();
+
+    const modal = page.querySelector('app-battle-modal')!;
+    expect(modal.textContent).toContain('Battle 17');
+    expect(Array.from(modal.querySelectorAll('img')).map((image) => image.getAttribute('src'))).toEqual([
+      'https://img.example/1.png',
+      'https://img.example/2.png'
+    ]);
+    expect(modal.textContent).toContain('Pokemon1');
+    expect(modal.textContent).toContain('50 XP');
+    expect(modal.textContent).toContain('Pokemon2');
+    expect(modal.textContent).toContain('51 XP');
+    expect(modal.textContent).toContain('Normal');
+    expect(modal.querySelector('.battle-result')?.textContent).toContain('Pokemon1 wins');
+
+    modal.querySelector<HTMLButtonElement>('button.btn-close')!.click();
+    harness.detectChanges();
+
+    expect(page.querySelector('app-battle-modal')).toBeNull();
+  });
+
+  /**
+   * Verifies that the modal of a tied Battle shows "Tie" instead of a winner.
+   */
+  it('should show Tie in the Battle modal when the Battle is a tie', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+
+    page.querySelectorAll<HTMLElement>('.battle-row')[2].click();
+    harness.detectChanges();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/battles/19` }).flush(createRound(3).battles[2]);
+    harness.detectChanges();
+
+    expect(page.querySelector('app-battle-modal .battle-result')?.textContent?.trim()).toBe('Tie');
+  });
+
+  /**
+   * Verifies that a Battle that fails to load shows the error inside the modal rather than in a toast,
+   * and that the modal can still be closed.
+   */
+  it('should show the error inside the modal when the Battle fails to load', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+
+    page.querySelector<HTMLElement>('.battle-row')!.click();
+    harness.detectChanges();
+    httpMock
+      .expectOne({ method: 'GET', url: `${tournamentUrl}/battles/17` })
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    const modal = page.querySelector('app-battle-modal')!;
+    expect(modal.querySelector('.alert-danger')?.textContent).toContain('Server error occurred. Please try again later.');
+    expect(page.querySelector('.toast-body')).toBeNull();
+
+    modal.querySelector<HTMLButtonElement>('button.btn-close')!.click();
+    harness.detectChanges();
+
+    expect(page.querySelector('app-battle-modal')).toBeNull();
+    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+  });
+
+  /**
+   * Verifies that a 404 on the Battle, as after an API restart, closes the modal and shows that the Tournament
+   * no longer exists.
+   */
+  it('should show that the Tournament no longer exists when the Battle answers 404', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+
+    page.querySelector<HTMLElement>('.battle-row')!.click();
+    harness.detectChanges();
+    httpMock
+      .expectOne({ method: 'GET', url: `${tournamentUrl}/battles/17` })
+      .flush({ error: 'Tournament not found.' }, { status: 404, statusText: 'Not Found' });
+    harness.detectChanges();
+
+    expect(page.textContent).toContain('This Tournament no longer exists.');
+    expect(page.querySelector('app-battle-modal')).toBeNull();
+  });
+
+  /**
    * Opens the Tournament page and answers its loading requests: the Tournament, then its last Round if any.
    */
   async function openTournamentPage(loaded: Tournament): Promise<RouterTestingHarness> {
@@ -289,6 +471,10 @@ describe('RoundByRoundTournamentComponent', () => {
     const card = Array.from(page.querySelectorAll('app-pokemon-card'))
       .find((element) => element.querySelector('.fs-5')?.textContent?.trim() === pokemonName);
     return card?.querySelector('.text-success.fw-bold')?.textContent?.trim() ?? '';
+  }
+
+  function selectedChip(page: HTMLElement): string {
+    return page.querySelector('button.round-chip[aria-pressed="true"]')?.textContent?.trim() ?? '';
   }
 
   function firstCardName(harness: RouterTestingHarness): string {

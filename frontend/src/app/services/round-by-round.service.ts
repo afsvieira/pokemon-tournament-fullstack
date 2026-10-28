@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { Tournament } from '../models/tournament.model';
 import { Round } from '../models/round.model';
 import { ProcessedRound } from '../models/processed-round.model';
+import { Battle } from '../models/battle.model';
 import { API_BASE_URL } from './api-base-url';
 
 @Injectable({
@@ -46,5 +47,15 @@ export class RoundByRoundService {
    */
   getRound(id: string, roundNumber: number): Observable<Round> {
     return this.http.get<Round>(`${API_BASE_URL}/${id}/rounds/${roundNumber}`);
+  }
+
+  /**
+   * Fetches a played Battle
+   * @param id - The Tournament's id
+   * @param battleId - The Battle's number within the Tournament, 1 to 120
+   * @returns Observable of the Battle with both Pokémon and its winner
+   */
+  getBattle(id: string, battleId: number): Observable<Battle> {
+    return this.http.get<Battle>(`${API_BASE_URL}/${id}/battles/${battleId}`);
   }
 }

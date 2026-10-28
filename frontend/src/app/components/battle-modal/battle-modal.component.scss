@@ -1,0 +1,17 @@
+// Battle Modal - the two sides of the Battle
+.fighter {
+  border-width: 2px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.fighter-image {
+  width: 96px;
+  height: 96px;
+
+  img {
+    max-width: 96px;
+    max-height: 96px;
+    object-fit: contain;
+  }
+}

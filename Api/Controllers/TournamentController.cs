@@ -227,6 +227,43 @@ public class TournamentController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Gets a played Battle of a Tournament with both Pokémon and its winner.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <param name="battleId">The Battle's number within the Tournament, 1 to 120</param>
+    /// <returns>The Battle</returns>
+    /// <response code="200">Returns the Battle</response>
+    /// <response code="404">No Tournament is held under that id, or the Battle is outside 1–120 or not played yet</response>
+    /// <response code="429">Rate limit exceeded</response>
+    /// <response code="500">An unexpected error occurred</response>
+    [HttpGet("{id:guid}/battles/{battleId:int}")]
+    [EnableRateLimiting(RateLimitPolicies.RoundByRound)]
+    [ProducesResponseType(typeof(BattleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetBattle(Guid id, int battleId)
+    {
+        try
+        {
+            return Ok(_tournamentService.GetBattle(id, battleId));
+        }
+        catch (TournamentNotFoundException)
+        {
+            return TournamentNotFound(id);
+        }
+        catch (BattleNotFoundException)
+        {
+            _logger.LogWarning("Battle {BattleId} of tournament {TournamentId} was not found", battleId, id);
+            return NotFound(new { error = "Battle not found." });
+        }
+        catch (Exception ex)
+        {
+            return UnexpectedError(ex, "getting a battle of tournament", id);
+        }
+    }
+
     private NotFoundObjectResult TournamentNotFound(Guid tournamentId)
     {
         // Expected after an API restart or with a stale link, so the id is enough without the stack trace

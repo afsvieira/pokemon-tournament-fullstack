@@ -6,6 +6,15 @@
   overflow: hidden;
 }
 
+.battle-row {
+  background-color: transparent;
+
+  &:hover,
+  &:focus-visible {
+    background-color: var(--bs-tertiary-bg);
+  }
+}
+
 .battle-number {
   min-width: 5.5rem;
   font-family: 'Courier New', monospace;
