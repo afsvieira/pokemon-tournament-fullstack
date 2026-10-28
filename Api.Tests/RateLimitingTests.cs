@@ -2,7 +2,9 @@ using System.Net;
 using Api.Application;
 using Api.Domain;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Api.Tests;
@@ -14,8 +16,9 @@ namespace Api.Tests;
 public class RateLimitingTests
 {
     private const string StatisticsUrl = "/pokemon/tournament/statistics?sortBy=wins";
+    private const string TournamentPolicySection = "RateLimiting:TournamentPolicy";
 
-    // Mirrors the TournamentPolicy configuration in Program.cs
+    // Mirror RateLimiting:TournamentPolicy in Api/appsettings.json
     private const int PermitLimit = 10;
     private const int QueueLimit = 5;
 
@@ -57,6 +60,68 @@ public class RateLimitingTests
         // Assert - PermitLimit requests served, the one beyond the queue rejected with 429
         Assert.Equal(PermitLimit, statuses.Count(status => status == HttpStatusCode.OK));
         Assert.Contains(HttpStatusCode.TooManyRequests, statuses);
+    }
+
+    /// <summary>
+    /// Verifies that the API refuses to start when the TournamentPolicy section, or one of its keys, is missing
+    /// from configuration, with an error that names the section instead of falling back to defaults.
+    /// </summary>
+    [Theory]
+    [InlineData(TournamentPolicySection)]
+    [InlineData($"{TournamentPolicySection}:QueueLimit")]
+    public async Task Startup_ShouldFail_WhenTournamentPolicySettingIsMissing(string missingPath)
+    {
+        // Arrange
+        await using var factory = CreateFactoryWithoutConfigurationSection(missingPath);
+
+        // Act
+        var exception = Record.Exception(() => factory.CreateClient());
+
+        // Assert
+        var validationException = Assert.IsType<OptionsValidationException>(exception);
+        Assert.Contains(TournamentPolicySection, validationException.Message);
+    }
+
+    /// <summary>
+    /// Verifies that the API refuses to start when a TournamentPolicy value is out of range,
+    /// with an error that names the section.
+    /// </summary>
+    [Theory]
+    [InlineData("PermitLimit", "0")]
+    [InlineData("WindowSeconds", "0")]
+    [InlineData("QueueLimit", "-1")]
+    public async Task Startup_ShouldFail_WhenTournamentPolicyValueIsInvalid(string key, string value)
+    {
+        // Arrange
+        await using var factory = CreateFactoryWithConfigurationSetting($"{TournamentPolicySection}:{key}", value);
+
+        // Act
+        var exception = Record.Exception(() => factory.CreateClient());
+
+        // Assert
+        var validationException = Assert.IsType<OptionsValidationException>(exception);
+        Assert.Contains(TournamentPolicySection, validationException.Message);
+    }
+
+    private static WebApplicationFactory<Program> CreateFactoryWithoutConfigurationSection(string sectionPath)
+    {
+        return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, config) =>
+            {
+                // Configuration providers can't delete keys, so swap every source for a copy without the section
+                var settings = config.Build().AsEnumerable()
+                    .Where(setting => setting.Key != sectionPath && !setting.Key.StartsWith($"{sectionPath}:"))
+                    .ToList();
+                config.Sources.Clear();
+                config.AddInMemoryCollection(settings);
+            }));
+    }
+
+    private static WebApplicationFactory<Program> CreateFactoryWithConfigurationSetting(string key, string value)
+    {
+        return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
+            builder.ConfigureAppConfiguration((_, config) =>
+                config.AddInMemoryCollection(new Dictionary<string, string?> { [key] = value })));
     }
 
     private static WebApplicationFactory<Program> CreateFactoryWithFakePokemonApi()

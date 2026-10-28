@@ -19,4 +19,4 @@
 - API port `5268`: `Api/Properties/launchSettings.json`, `frontend/src/app/services/tournament.service.ts`.
 - Frontend origin `http://localhost:4200`: `AllowAngular` CORS policy in `Api/Program.cs`.
 - Sort fields (`wins`, `losses`, `ties`, `name`, `id`): `TournamentController`, `TournamentService.SortPokemons`, frontend `SortBy` enum.
-- Rate limit (10 requests/minute per IP, queue of 5, rejections 429): `TournamentPolicy` in `Api/Program.cs`, constants in `Api.Tests/RateLimitingTests.cs`, README, 429 message in `TournamentComponent.getErrorMessage`.
+- Rate limit (10 requests/minute per IP, queue of 5, rejections 429): the numbers live in configuration, `RateLimiting:TournamentPolicy` in `Api/appsettings.json` (no defaults in code: the API fails at startup without them); also the constants in `Api.Tests/RateLimitingTests.cs`, README, 429 message in `TournamentComponent.getErrorMessage`. The fixed window and per-IP partition stay in code (`AddFixedWindowRateLimitPolicy`).

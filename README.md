@@ -142,7 +142,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
 - **Input Validation**: Rejects missing or unknown `sortBy` and unknown `sortDirection` with `400`
-- **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected with `429`
+- **Rate Limiting**: Fixed window of 10 requests/minute per IP; up to 5 more requests wait for the next window, and anything beyond that is rejected with `429`. The numbers are set in configuration (see [Rate Limit Configuration](#rate-limit-configuration))
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
@@ -160,8 +160,8 @@ dotnet test
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
-- Rate limiting through the real HTTP pipeline (1 test)
-- **Total: 21 tests**
+- Rate limiting and its configuration through the real HTTP pipeline (6 tests)
+- **Total: 26 tests**
 
 ### Run Frontend Tests
 
@@ -196,7 +196,7 @@ pokemon-tournament-fullstack/
 │   ├── Domain/                   # Battle rules, domain models and enums
 │   ├── Infrastructure/           # PokéAPI HTTP client
 │   ├── Dtos/                     # PokéAPI response shapes
-│   ├── Shared/                   # String helpers
+│   ├── Shared/                   # String helpers and rate-limit policy setup
 │   └── Program.cs                # DI, rate limiting, CORS, Swagger
 ├── Api.Tests/                    # xUnit test project
 ├── frontend/                     # Angular 18 application
@@ -229,6 +229,22 @@ pokemon-tournament-fullstack/
 ### API Configuration
 
 The API runs on `http://localhost:5268` by default. To change the port, modify `Api/Properties/launchSettings.json`.
+
+### Rate Limit Configuration
+
+The rate-limit numbers live in the `RateLimiting` section of `Api/appsettings.json`, one sub-section per policy:
+
+```json
+"RateLimiting": {
+  "TournamentPolicy": { "PermitLimit": 10, "WindowSeconds": 60, "QueueLimit": 5 }
+}
+```
+
+- `PermitLimit`: requests allowed per window and client IP (1 or more)
+- `WindowSeconds`: length of the fixed window, in seconds (1 or more)
+- `QueueLimit`: requests that wait for the next window once the permits are spent (0 or more)
+
+There are no defaults in code: the API refuses to start, naming the section, when a sub-section or one of its keys is missing or out of range. The fixed-window type and the per-IP partition are set in code.
 
 ### Frontend Configuration
 

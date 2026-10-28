@@ -1,7 +1,7 @@
 using Api.Application;
 using Api.Domain;
 using Api.Infrastructure;
-using System.Threading.RateLimiting;
+using Api.Shared;
 using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,18 +47,10 @@ builder.Services.AddRateLimiter(options =>
 {
     // Rejected requests default to 503; 429 tells clients to slow down rather than that the service is down
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
-
-    options.AddPolicy("TournamentPolicy", context =>
-        RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
-            factory: _ => new FixedWindowRateLimiterOptions
-            {
-                PermitLimit = 10,
-                Window = TimeSpan.FromMinutes(1),
-                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
-                QueueLimit = 5
-            }));
 });
+
+// Each policy's numbers live in the RateLimiting section of appsettings.json
+builder.Services.AddFixedWindowRateLimitPolicy("TournamentPolicy");
 
 // Configure CORS for Angular frontend (localhost:4200)
 builder.Services.AddCors(options =>
