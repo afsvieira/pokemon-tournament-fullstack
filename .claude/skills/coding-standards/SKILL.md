@@ -30,4 +30,4 @@ description: Coding standards for this repo's C# API, its tests and the Angular 
 
 ## Commits
 
-Conventional Commits (`feat:`, `fix:`, `refactor(scope):`, `test:`, `docs:`, `chore:`), with `Closes #N` in the body when the commit finishes an issue.
+Conventional Commits (`feat:`, `fix:`, `refactor(scope):`, `test:`, `docs:`, `chore:`). When the commit finishes a ticket of the local markdown tracker, the body ends with `Closes ticket NN (<path of the ticket file>)`, never `Closes #N`: GitHub reads `#N` as one of this repository's issues and closes it on merge.
