@@ -5,6 +5,7 @@ import { Tournament } from '../models/tournament.model';
 import { Round } from '../models/round.model';
 import { ProcessedRound } from '../models/processed-round.model';
 import { Battle } from '../models/battle.model';
+import { TournamentHistoryEntry } from '../models/tournament-history-entry.model';
 import { API_BASE_URL } from './api-base-url';
 
 @Injectable({
@@ -57,5 +58,13 @@ export class RoundByRoundService {
    */
   getBattle(id: string, battleId: number): Observable<Battle> {
     return this.http.get<Battle>(`${API_BASE_URL}/${id}/battles/${battleId}`);
+  }
+
+  /**
+   * Fetches the Tournament History: every Tournament started since the API last started
+   * @returns Observable of the History entries, newest first, Complete or not
+   */
+  getHistory(): Observable<TournamentHistoryEntry[]> {
+    return this.http.get<TournamentHistoryEntry[]>(`${API_BASE_URL}/history`);
   }
 }

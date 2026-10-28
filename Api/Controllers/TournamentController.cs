@@ -264,6 +264,32 @@ public class TournamentController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Lists the Tournament History: every Tournament started since the API last started, newest first,
+    /// Complete or not. There is no paging.
+    /// </summary>
+    /// <returns>The Tournament History entries</returns>
+    /// <response code="200">Returns the Tournament History, empty when no Tournament was started</response>
+    /// <response code="429">Rate limit exceeded</response>
+    /// <response code="500">An unexpected error occurred</response>
+    [HttpGet("history")]
+    [EnableRateLimiting(RateLimitPolicies.RoundByRound)]
+    [ProducesResponseType(typeof(IReadOnlyList<TournamentHistoryEntryDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetHistory()
+    {
+        try
+        {
+            return Ok(_tournamentService.GetHistory());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An unexpected error occurred while getting the tournament history");
+            return Problem("An unexpected error occurred", statusCode: 500);
+        }
+    }
+
     private NotFoundObjectResult TournamentNotFound(Guid tournamentId)
     {
         // Expected after an API restart or with a stale link, so the id is enough without the stack trace

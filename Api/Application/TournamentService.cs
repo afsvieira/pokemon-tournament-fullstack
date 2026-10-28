@@ -170,6 +170,24 @@ public class TournamentService : ITournamentService
         }
     }
 
+    /// <summary>
+    /// Lists the Tournament History: every Tournament started since the API last started.
+    /// </summary>
+    /// <returns>Every Tournament, newest first, Complete or not</returns>
+    public IReadOnlyList<TournamentHistoryEntryDto> GetHistory()
+    {
+        return _tournamentRepository.GetAll()
+            .Select(tournament =>
+            {
+                lock (tournament.SyncRoot)
+                {
+                    return TournamentHistoryEntryDto.From(tournament);
+                }
+            })
+            .OrderByDescending(entry => entry.StartedAt)
+            .ToList();
+    }
+
     private Tournament GetStoredTournament(Guid id)
     {
         return _tournamentRepository.Get(id) ?? throw new TournamentNotFoundException(id);

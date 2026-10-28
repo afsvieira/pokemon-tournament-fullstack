@@ -4,7 +4,7 @@ import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, map, of, switchMap } from 'rxjs';
-import { Tournament } from '../../models/tournament.model';
+import { ROUND_COUNT, Tournament } from '../../models/tournament.model';
 import { Round } from '../../models/round.model';
 import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
@@ -34,7 +34,7 @@ import { getErrorMessage } from '../../shared/error-message';
   styleUrl: './round-by-round-tournament.component.scss'
 })
 export class RoundByRoundTournamentComponent implements OnInit {
-  readonly roundCount = 15;
+  readonly roundCount = ROUND_COUNT;
 
   tournament: Tournament | null = null;
   currentRound: Round | null = null;

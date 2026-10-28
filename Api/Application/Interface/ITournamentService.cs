@@ -60,4 +60,10 @@ public interface ITournamentService
     /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
     /// <exception cref="BattleNotFoundException">When the Battle is outside 1–120 or hasn't been played yet</exception>
     BattleDto GetBattle(Guid id, int battleId);
+
+    /// <summary>
+    /// Lists the Tournament History: every Tournament started since the API last started.
+    /// </summary>
+    /// <returns>Every Tournament, newest first, Complete or not</returns>
+    IReadOnlyList<TournamentHistoryEntryDto> GetHistory();
 }

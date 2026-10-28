@@ -23,6 +23,8 @@ public class RoundByRoundEndpointsTests
 
     private static readonly string[] BattlePokemonProperties = ["id", "name", "type", "baseExperience", "imageUrl"];
 
+    private static readonly string[] HistoryEntryProperties = ["id", "startedAt", "roundsPlayed"];
+
     /// <summary>
     /// Verifies that Start answers 201 with a Location pointing at the new Tournament, and a body with the
     /// Tournament's camelCase shape: 16 capitalized Standings entries in Start order, without battle records.
@@ -349,6 +351,34 @@ public class RoundByRoundEndpointsTests
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Equal("""{"error":"Tournament not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that the History route answers 200 with every started Tournament as a camelCase entry,
+    /// Complete or not, rather than being captured by the {id} route as a 404.
+    /// </summary>
+    [Fact]
+    public async Task GetHistory_ShouldReturn200WithEveryTournament_WhenTournamentsWereStarted()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+        var playedUrl = await StartTournamentAsync(client);
+        using var processResponse = await client.PostAsync($"{playedUrl}/rounds", content: null);
+        var unplayedUrl = await StartTournamentAsync(client);
+
+        // Act
+        using var response = await client.GetAsync($"{TestApi.TournamentUrl}/history");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var entries = (await ReadJsonAsync(response)).EnumerateArray().ToList();
+        Assert.All(entries, entry => Assert.Equal(HistoryEntryProperties, PropertyNames(entry)));
+        (string Url, int RoundsPlayed)[] expected = [(playedUrl, 1), (unplayedUrl, 0)];
+        var listed = entries.Select(entry => (
+            Url: $"{TestApi.TournamentUrl}/{entry.GetProperty("id").GetGuid()}",
+            RoundsPlayed: entry.GetProperty("roundsPlayed").GetInt32()));
+        Assert.Equal(expected.OrderBy(entry => entry.Url), listed.OrderBy(entry => entry.Url));
     }
 
     private static async Task<string> StartTournamentAsync(HttpClient client)

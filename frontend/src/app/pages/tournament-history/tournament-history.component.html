@@ -7,3 +7,61 @@
 
   <app-start-tournament-button></app-start-tournament-button>
 </div>
+
+<!-- Tournament History: every Tournament since the API last started, newest first -->
+<h2 class="h4 mb-3">Tournament History</h2>
+
+@if (isLoading) {
+  <div class="text-center text-muted py-5">
+    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+    Loading Tournament History...
+  </div>
+} @else if (loadErrorMessage) {
+  <!-- Load error: replaces the list so it doesn't read as "no Tournaments" -->
+  <div class="alert alert-danger d-flex flex-wrap align-items-center justify-content-between gap-3 load-error" role="alert">
+    <span>
+      <i class="fas fa-exclamation-triangle me-2"></i>
+      {{ loadErrorMessage }}
+    </span>
+    <button type="button" class="btn btn-outline-danger btn-sm" (click)="loadHistory()">
+      <i class="fas fa-rotate-right me-1"></i>
+      Retry
+    </button>
+  </div>
+} @else if (isEmpty) {
+  <div class="card border-secondary history-card">
+    <div class="card-body text-center text-muted py-4">
+      <i class="fas fa-inbox me-2"></i>
+      No Tournaments since the API last started.
+    </div>
+  </div>
+} @else {
+  <div class="card border-secondary history-card">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Started</th>
+            <th scope="col">Rounds</th>
+            <th scope="col"><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (entry of history; track entry.id) {
+            <tr>
+              <td>{{ entry.startedAt | date: 'dd/MM/yyyy HH:mm' }}</td>
+              <td [class.text-success]="isComplete(entry)" [class.fw-semibold]="isComplete(entry)">
+                {{ getRoundsLabel(entry) }}
+              </td>
+              <td class="text-end">
+                <a [routerLink]="['/round-by-round', entry.id]" class="btn btn-outline-primary btn-sm open-tournament">
+                  Open
+                </a>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

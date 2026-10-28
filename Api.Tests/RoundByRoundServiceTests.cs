@@ -17,12 +17,12 @@ public class RoundByRoundServiceTests
 
     private readonly Mock<IPokemonApiClient> _pokemonApiClient = new();
     private readonly InMemoryTournamentRepository _repository = new();
+    private readonly FakeTimeProvider _timeProvider = new(StartTime);
     private readonly TournamentService _service;
 
     public RoundByRoundServiceTests()
     {
-        _service = new TournamentService(
-            _pokemonApiClient.Object, new BattleSimulator(), _repository, new FakeTimeProvider(StartTime));
+        _service = new TournamentService(_pokemonApiClient.Object, new BattleSimulator(), _repository, _timeProvider);
     }
 
     /// <summary>
@@ -257,6 +257,36 @@ public class RoundByRoundServiceTests
 
         // Assert
         Assert.Throws<BattleNotFoundException>(getBattle);
+    }
+
+    /// <summary>
+    /// Verifies that the Tournament History lists every Tournament, newest first, with the Rounds each has played,
+    /// including Tournaments that are not Complete.
+    /// </summary>
+    [Fact]
+    public async Task GetHistory_ShouldListTournamentsNewestFirstCompleteOrNot_WhenSeveralWereStarted()
+    {
+        // Arrange - Started a minute apart; the oldest is Complete, the middle one has played 2 Rounds
+        var oldest = await StartTournamentAsync(TestPokemon.FromIds(TestPokemon.SixteenIds));
+        PlayRounds(oldest.Id, Tournament.RoundCount);
+        _timeProvider.Advance(TimeSpan.FromMinutes(1));
+        var middle = await StartTournamentAsync(TestPokemon.FromIds(TestPokemon.SixteenIds));
+        PlayRounds(middle.Id, 2);
+        _timeProvider.Advance(TimeSpan.FromMinutes(1));
+        var newest = await StartTournamentAsync(TestPokemon.FromIds(TestPokemon.SixteenIds));
+
+        // Act
+        var history = _service.GetHistory();
+
+        // Assert
+        Assert.Equal(
+            new[]
+            {
+                (newest.Id, StartTime.AddMinutes(2), 0),
+                (middle.Id, StartTime.AddMinutes(1), 2),
+                (oldest.Id, StartTime, 15)
+            },
+            history.Select(entry => (entry.Id, entry.StartedAt, entry.RoundsPlayed)));
     }
 
     private async Task<TournamentDto> StartTournamentAsync(List<TournamentPokemon> pokemons)
