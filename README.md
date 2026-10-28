@@ -4,7 +4,10 @@ A full-stack application that simulates Pokémon battles in a tournament format,
 
 ## 🎯 Project Overview
 
-This application fetches 16 random Pokémon from the first generation (Kanto region), simulates all-versus-all battles based on type advantages and base experience, then displays the results with comprehensive statistics and battle history.
+This application fetches 16 random Pokémon from the first generation (Kanto region) and runs a round-robin tournament between them, decided by type advantages and base experience. It has two flows:
+
+- **Instant Simulation**: plays all 120 battles in one request and shows the final statistics, with each Pokémon's battle history.
+- **Round by Round**: a Tournament held in the API's memory and played one Round at a time. Any played Round or single Battle can be reviewed, and the Tournament History lists the Tournaments started since the API last started.
 
 ## 🏗️ Architecture
 
@@ -21,6 +24,7 @@ This application fetches 16 random Pokémon from the first generation (Kanto reg
 - .NET 10 SDK
 - Node.js 18.19+, 20.11+ or 22+ and npm (Angular 18 requirement)
 - Git
+- Internet access for the API, which calls the live PokéAPI (the tests fake it and run offline)
 
 ### 1. Clone the Repository
 
@@ -40,7 +44,11 @@ dotnet run
 The API will be available at: `http://localhost:5268`
 - Swagger UI: `http://localhost:5268/swagger`
 
+It keeps running in this terminal. Round-by-round Tournaments live in its memory, so restarting it clears them.
+
 ### 3. Run the Frontend
+
+In a second terminal, from the repository root:
 
 ```bash
 cd frontend
@@ -48,7 +56,9 @@ npm install
 npm start
 ```
 
-The Angular app will be available at: `http://localhost:4200`
+The Angular app will be available at: `http://localhost:4200`. The navigation bar switches between the Instant Simulation (`/tournament`) and Round by Round (`/round-by-round`).
+
+Keep it on port 4200: it is the only origin the API's CORS policy accepts (see [Frontend Configuration](#frontend-configuration)).
 
 ## 📋 API Documentation
 
@@ -279,7 +289,7 @@ cd frontend
 npm test
 ```
 
-`npm test` opens Chrome and re-runs on file changes. For a single headless run:
+`npm test` opens Chrome and re-runs on file changes. Karma needs Chrome or Chromium; if it can't find one, point `CHROME_BIN` at the browser's executable. For a single headless run:
 
 ```bash
 npx ng test --watch=false --browsers=ChromeHeadless
@@ -315,7 +325,7 @@ pokemon-tournament-fullstack/
 │       ├── components/           # Reusable UI components
 │       ├── pages/                # Page components
 │       ├── services/             # HTTP services and the shared API base URL
-│       ├── shared/               # Error messages and shared styles
+│       ├── shared/               # Error messages, Battle result labels and shared styles
 │       ├── testing/              # Test data shared by specs
 │       └── models/               # API models, enums and display mappings
 └── README.md
@@ -372,7 +382,7 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 - **API Response Time**: Usually well under a second; PokéAPI is only called for Pokémon not yet cached, and those requests run in parallel. Once all 151 are cached, a call never reaches PokéAPI
 - **Battle Simulation**: 120 battles processed in <1ms
 - **Re-sorting**: Changing the sort order re-sorts the loaded results in the browser without calling the API again
-- **Bundle Size**: ~712 kB initial bundle in a production build (~148 kB transferred), including Bootstrap and Font Awesome
+- **Bundle Size**: ~762 kB initial bundle in a production build (~160 kB transferred), including Bootstrap and Font Awesome
 
 ## 🚨 Error Handling
 
