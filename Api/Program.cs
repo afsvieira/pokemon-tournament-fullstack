@@ -38,14 +38,17 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Register application services
-builder.Services.AddHttpClient<PokemonApiClient>();
+builder.Services.AddHttpClient<IPokemonApiClient, PokemonApiClient>();
 builder.Services.AddScoped<BattleSimulator>();
 builder.Services.AddScoped<ITournamentService, TournamentService>();
 
 // Configure rate limiting
 builder.Services.AddRateLimiter(options =>
 {
-    options.AddPolicy("TournamentPolicy", context => 
+    // Rejected requests default to 503; 429 tells clients to slow down rather than that the service is down
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("TournamentPolicy", context =>
         RateLimitPartition.GetFixedWindowLimiter(
             partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
             factory: _ => new FixedWindowRateLimiterOptions
