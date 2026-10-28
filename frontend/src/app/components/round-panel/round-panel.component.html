@@ -1,0 +1,35 @@
+<!-- Round panel - the Round's 8 Battles: who fought whom and who won -->
+<div class="card border-secondary mb-4 round-panel">
+  @if (round) {
+    <div class="card-header bg-transparent border-secondary fw-semibold">Round {{ round.roundNumber }}</div>
+    <ul class="list-group list-group-flush">
+      @for (battle of round.battles; track battle.id) {
+        <li class="list-group-item bg-transparent d-flex flex-wrap align-items-center gap-3 battle-row">
+          <span class="text-muted battle-number">Battle {{ battle.id }}</span>
+
+          <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon1 }"></ng-container>
+          <span class="text-muted">vs</span>
+          <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon2 }"></ng-container>
+
+          <span class="ms-auto fw-semibold result" [ngClass]="getResultClass(battle)">
+            {{ getResultLabel(battle) }}
+          </span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="card-body text-center text-muted py-4">
+      <i class="fas fa-hourglass-half me-2"></i>
+      No Rounds yet
+    </div>
+  }
+</div>
+
+<!-- One side of a Battle: type icon, name and base experience -->
+<ng-template #fighter let-pokemon>
+  <span class="fighter">
+    <i class="me-1" [ngClass]="getTypeIcon(pokemon.type)"></i>
+    <span class="fw-semibold">{{ pokemon.name }}</span>
+    <small class="text-muted ms-1">{{ pokemon.baseExperience }} XP</small>
+  </span>
+</ng-template>

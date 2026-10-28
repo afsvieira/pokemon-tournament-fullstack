@@ -96,8 +96,60 @@ public class TournamentService : ITournamentService
     /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
     public TournamentDto GetTournament(Guid id)
     {
-        var tournament = _tournamentRepository.Get(id) ?? throw new TournamentNotFoundException(id);
-        return TournamentDto.From(tournament);
+        var tournament = GetStoredTournament(id);
+
+        lock (tournament.SyncRoot)
+        {
+            return TournamentDto.From(tournament);
+        }
+    }
+
+    /// <summary>
+    /// Processes the next Round of a Tournament: pairs its Pokémon, decides the 8 Battles and updates the Standings.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <returns>The Round just played, with the updated Standings</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    /// <exception cref="TournamentCompleteException">When all 15 Rounds have already been played</exception>
+    public ProcessedRoundDto ProcessRound(Guid id)
+    {
+        var tournament = GetStoredTournament(id);
+
+        // Simultaneous calls take turns: the second one plays the following Round, or finds the Tournament Complete
+        lock (tournament.SyncRoot)
+        {
+            if (tournament.IsComplete)
+                throw new TournamentCompleteException(id);
+
+            var round = tournament.PlayNextRound(_battleSimulator);
+            return ProcessedRoundDto.From(round, tournament);
+        }
+    }
+
+    /// <summary>
+    /// Gets a played Round of a Tournament.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <param name="roundNumber">The Round's number, 1 to 15</param>
+    /// <returns>The Round with its 8 Battles</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    /// <exception cref="RoundNotFoundException">When the Round is outside 1–15 or hasn't been played yet</exception>
+    public RoundDto GetRound(Guid id, int roundNumber)
+    {
+        var tournament = GetStoredTournament(id);
+
+        lock (tournament.SyncRoot)
+        {
+            if (roundNumber < 1 || roundNumber > tournament.RoundsPlayed)
+                throw new RoundNotFoundException(id, roundNumber);
+
+            return RoundDto.From(tournament.Rounds[roundNumber - 1], tournament);
+        }
+    }
+
+    private Tournament GetStoredTournament(Guid id)
+    {
+        return _tournamentRepository.Get(id) ?? throw new TournamentNotFoundException(id);
     }
 
     private IEnumerable<TournamentPokemon> SortPokemons(List<TournamentPokemon> pokemons, string sortBy, string direction)

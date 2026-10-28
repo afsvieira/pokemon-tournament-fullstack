@@ -3,19 +3,31 @@ import { DatePipe } from '@angular/common';
 import { HttpErrorResponse, HttpStatusCode } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { map, of, switchMap } from 'rxjs';
 import { Tournament } from '../../models/tournament.model';
+import { Round } from '../../models/round.model';
 import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
 import { RoundByRoundService } from '../../services/round-by-round.service';
 import { PokemonCardComponent } from '../../components/pokemon-card/pokemon-card.component';
 import { SortControlsComponent } from '../../components/sort-controls/sort-controls.component';
 import { StartTournamentButtonComponent } from '../../components/start-tournament-button/start-tournament-button.component';
+import { RoundPanelComponent } from '../../components/round-panel/round-panel.component';
+import { ErrorToastComponent } from '../../components/error-toast/error-toast.component';
 import { getErrorMessage } from '../../shared/error-message';
 
 @Component({
   selector: 'app-round-by-round-tournament',
   standalone: true,
-  imports: [DatePipe, RouterLink, PokemonCardComponent, SortControlsComponent, StartTournamentButtonComponent],
+  imports: [
+    DatePipe,
+    RouterLink,
+    PokemonCardComponent,
+    SortControlsComponent,
+    StartTournamentButtonComponent,
+    RoundPanelComponent,
+    ErrorToastComponent
+  ],
   templateUrl: './round-by-round-tournament.component.html',
   styleUrl: './round-by-round-tournament.component.scss'
 })
@@ -23,7 +35,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
   readonly roundCount = 15;
 
   tournament: Tournament | null = null;
+  currentRound: Round | null = null;
   isLoading = false;
+  isProcessing = false;
+  toastMessage = '';
   loadErrorMessage = '';
   isTournamentGone = false;
   currentSortBy: SortBy = SortBy.wins;
@@ -55,6 +70,13 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
+   * Whether all 15 Rounds have been played, so Process Round gives way to the Complete badge
+   */
+  get isComplete(): boolean {
+    return this.tournament?.roundsPlayed === this.roundCount;
+  }
+
+  /**
    * The current Standings, sorted locally with the sort controls
    */
   get sortedStandings(): TournamentPokemon[] {
@@ -72,17 +94,26 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * Loads the Tournament shown by this page; also what Retry does after a failed load
+   * Loads the Tournament shown by this page, plus its last played Round when there is one;
+   * also what Retry does after a failed load
+   * @param onLoaded - Runs once both have loaded, never after a failure
    */
-  loadTournament(): void {
+  loadTournament(onLoaded?: () => void): void {
     this.isLoading = true;
     this.loadErrorMessage = '';
     this.isTournamentGone = false;
 
-    this.roundByRoundService.getTournament(this.tournamentId).subscribe({
-      next: (tournament) => {
+    this.roundByRoundService.getTournament(this.tournamentId).pipe(
+      switchMap((tournament) => tournament.roundsPlayed === 0
+        ? of({ tournament, lastRound: null })
+        : this.roundByRoundService.getRound(tournament.id, tournament.roundsPlayed)
+          .pipe(map((lastRound) => ({ tournament, lastRound }))))
+    ).subscribe({
+      next: ({ tournament, lastRound }) => {
         this.tournament = tournament;
+        this.currentRound = lastRound;
         this.isLoading = false;
+        onLoaded?.();
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
@@ -91,6 +122,46 @@ export class RoundByRoundTournamentComponent implements OnInit {
         }
       }
     });
+  }
+
+  /**
+   * Processes the next Round, then shows it and the Standings it left behind.
+   * A failure shows a toast and leaves the page as it was; a 409 means another tab completed the Tournament,
+   * so the page reloads the Tournament and its last Round, and only then says so.
+   */
+  processRound(): void {
+    this.isProcessing = true;
+
+    this.roundByRoundService.processRound(this.tournamentId).subscribe({
+      next: (processedRound) => {
+        this.currentRound = { roundNumber: processedRound.roundNumber, battles: processedRound.battles };
+        this.tournament = {
+          ...this.tournament!,
+          roundsPlayed: processedRound.roundNumber,
+          standings: processedRound.standings
+        };
+        this.isProcessing = false;
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isProcessing = false;
+        if (this.handledAsTournamentGone(error)) {
+          return;
+        }
+        const message = getErrorMessage(error);
+        if (error.status === HttpStatusCode.Conflict) {
+          this.loadTournament(() => this.toastMessage = message);
+        } else {
+          this.toastMessage = message;
+        }
+      }
+    });
+  }
+
+  /**
+   * Clears the toast once it is closed or hides itself
+   */
+  hideToast(): void {
+    this.toastMessage = '';
   }
 
   /**
@@ -104,6 +175,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
       return false;
     }
     this.isTournamentGone = true;
+    this.toastMessage = '';
     return true;
   }
 

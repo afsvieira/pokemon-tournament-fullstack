@@ -5,7 +5,8 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { API_BASE_URL } from '../../services/api-base-url';
-import { createStartedTournament } from '../../testing/test-tournament';
+import { createProcessedRound, createRound, createStartedTournament } from '../../testing/test-tournament';
+import { Tournament } from '../../models/tournament.model';
 
 /**
  * Tests for the Tournament page, rendered through the app routes with the real RoundByRoundService.
@@ -135,6 +136,146 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
   });
 
+  /**
+   * Verifies that Process Round shows the new Round's 8 Battles with their results,
+   * moves the header to "Round 1 of 15" and updates the cards from the returned Standings.
+   */
+  it('should show the Round and update the cards when Process Round succeeds', async () => {
+    const harness = await RouterTestingHarness.create(`/round-by-round/${tournament.id}`);
+    httpMock.expectOne({ method: 'GET', url: tournamentUrl }).flush(tournament);
+    harness.detectChanges();
+    const page = harness.routeNativeElement!;
+    expect(cardWins(page, 'Pokemon1')).toBe('0');
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(1));
+    harness.detectChanges();
+
+    const battleRows = page.querySelectorAll('.battle-row');
+    expect(battleRows.length).toBe(8);
+    expect(battleRows[0].textContent).toContain('Battle 1');
+    expect(battleRows[0].textContent).toContain('Pokemon1');
+    expect(battleRows[0].textContent).toContain('50 XP');
+    expect(battleRows[0].textContent).toContain('Pokemon2');
+    expect(battleRows[0].textContent).toContain('51 XP');
+    expect(battleRows[0].querySelectorAll('i.fa-circle').length).toBe(2);
+    expect(battleRows[0].textContent).toContain('Pokemon1 wins');
+    expect(battleRows[2].textContent).toContain('Tie');
+    expect(page.textContent).toContain('Round 1 of 15');
+    expect(page.textContent).not.toContain('No Rounds yet');
+    expect(cardWins(page, 'Pokemon1')).toBe('1');
+  });
+
+  /**
+   * Verifies that Process Round is disabled with a spinner while its request runs,
+   * and that the Complete badge replaces it once Round 15 is played.
+   */
+  it('should disable Process Round while in flight, and show the Complete badge after Round 15', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 14 });
+    const page = harness.routeNativeElement!;
+    const processButton = page.querySelector<HTMLButtonElement>('button.process-round')!;
+
+    processButton.click();
+    harness.detectChanges();
+
+    expect(processButton.disabled).toBeTrue();
+    expect(processButton.querySelector('.spinner-border')).not.toBeNull();
+
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(15));
+    harness.detectChanges();
+
+    expect(page.textContent).toContain('Round 15 of 15');
+    expect(page.querySelector('.complete-badge')?.textContent).toContain('✔ Complete');
+    expect(page.querySelector('button.process-round')).toBeNull();
+  });
+
+  /**
+   * Verifies that opening a Tournament with Rounds played also loads and shows its last Round.
+   */
+  it('should show the last played Round when the page loads', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+
+    expect(page.textContent).toContain('Round 3 of 15');
+    expect(page.querySelector('app-round-panel')?.textContent).toContain('Round 3');
+    expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 17');
+  });
+
+  /**
+   * Verifies that a failed Process Round shows a toast, leaves the page as it was and enables the button again.
+   */
+  it('should show a toast and keep the page when Process Round fails', async () => {
+    const harness = await openTournamentPage(tournament);
+    const page = harness.routeNativeElement!;
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock
+      .expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` })
+      .flush(null, { status: 500, statusText: 'Server Error' });
+    harness.detectChanges();
+
+    expect(page.querySelector('.toast-body')?.textContent).toContain('Server error occurred. Please try again later.');
+    expect(page.textContent).toContain('Round 0 of 15');
+    expect(page.textContent).toContain('No Rounds yet');
+    expect(page.querySelector<HTMLButtonElement>('button.process-round')!.disabled).toBeFalse();
+  });
+
+  /**
+   * Verifies that a 409 from Process Round, as in a stale tab whose Tournament another tab completed,
+   * reloads the Tournament and its last Round, then shows the API's message in a toast.
+   */
+  it('should reload the Tournament and show the API message when Process Round answers 409', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 14 });
+    const page = harness.routeNativeElement!;
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock
+      .expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` })
+      .flush({ error: 'Tournament is already complete.' }, { status: 409, statusText: 'Conflict' });
+    harness.detectChanges();
+
+    expect(page.querySelector('.toast-body')).toBeNull();
+
+    httpMock.expectOne({ method: 'GET', url: tournamentUrl }).flush({ ...tournament, roundsPlayed: 15 });
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/15` }).flush(createRound(15));
+    harness.detectChanges();
+
+    expect(page.textContent).toContain('Round 15 of 15');
+    expect(page.querySelector('.complete-badge')).not.toBeNull();
+    expect(page.querySelector('.toast-body')?.textContent).toContain('Tournament is already complete.');
+  });
+
+  /**
+   * Verifies that a 404 from Process Round, as after an API restart, shows that the Tournament no longer exists.
+   */
+  it('should show that the Tournament no longer exists when Process Round answers 404', async () => {
+    const harness = await openTournamentPage(tournament);
+    const page = harness.routeNativeElement!;
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock
+      .expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` })
+      .flush({ error: 'Tournament not found.' }, { status: 404, statusText: 'Not Found' });
+    harness.detectChanges();
+
+    expect(page.textContent).toContain('This Tournament no longer exists.');
+    expect(page.querySelector('.toast-body')).toBeNull();
+  });
+
+  /**
+   * Opens the Tournament page and answers its loading requests: the Tournament, then its last Round if any.
+   */
+  async function openTournamentPage(loaded: Tournament): Promise<RouterTestingHarness> {
+    const harness = await RouterTestingHarness.create(`/round-by-round/${loaded.id}`);
+    httpMock.expectOne({ method: 'GET', url: tournamentUrl }).flush(loaded);
+    if (loaded.roundsPlayed > 0) {
+      httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/${loaded.roundsPlayed}` })
+        .flush(createRound(loaded.roundsPlayed));
+    }
+    harness.detectChanges();
+    return harness;
+  }
+
   async function openGoneTournament(): Promise<RouterTestingHarness> {
     const harness = await RouterTestingHarness.create(`/round-by-round/${tournament.id}`);
     httpMock
@@ -142,6 +283,12 @@ describe('RoundByRoundTournamentComponent', () => {
       .flush({ error: 'Tournament not found.' }, { status: 404, statusText: 'Not Found' });
     harness.detectChanges();
     return harness;
+  }
+
+  function cardWins(page: HTMLElement, pokemonName: string): string {
+    const card = Array.from(page.querySelectorAll('app-pokemon-card'))
+      .find((element) => element.querySelector('.fs-5')?.textContent?.trim() === pokemonName);
+    return card?.querySelector('.text-success.fw-bold')?.textContent?.trim() ?? '';
   }
 
   function firstCardName(harness: RouterTestingHarness): string {

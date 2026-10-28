@@ -31,4 +31,23 @@ public interface ITournamentService
     /// <returns>The Tournament with its current Standings</returns>
     /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
     TournamentDto GetTournament(Guid id);
+
+    /// <summary>
+    /// Processes the next Round of a Tournament: pairs its Pokémon, decides the 8 Battles and updates the Standings.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <returns>The Round just played, with the updated Standings</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    /// <exception cref="TournamentCompleteException">When all 15 Rounds have already been played</exception>
+    ProcessedRoundDto ProcessRound(Guid id);
+
+    /// <summary>
+    /// Gets a played Round of a Tournament.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <param name="roundNumber">The Round's number, 1 to 15</param>
+    /// <returns>The Round with its 8 Battles</returns>
+    /// <exception cref="TournamentNotFoundException">When no Tournament is held under that id</exception>
+    /// <exception cref="RoundNotFoundException">When the Round is outside 1–15 or hasn't been played yet</exception>
+    RoundDto GetRound(Guid id, int roundNumber);
 }

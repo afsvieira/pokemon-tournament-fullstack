@@ -140,16 +140,103 @@ public class TournamentController : ControllerBase
         {
             return Ok(_tournamentService.GetTournament(id));
         }
-        catch (TournamentNotFoundException ex)
+        catch (TournamentNotFoundException)
         {
-            // Expected after an API restart or with a stale link, so the id is enough without the stack trace
-            _logger.LogWarning("Tournament {TournamentId} was not found: {Reason}", id, ex.Message);
-            return NotFound(new { error = "Tournament not found." });
+            return TournamentNotFound(id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "An unexpected error occurred while getting tournament {TournamentId}", id);
-            return Problem("An unexpected error occurred", statusCode: 500);
+            return UnexpectedError(ex, "getting tournament", id);
         }
+    }
+
+    /// <summary>
+    /// Processes the next Round of a Tournament: pairs its 16 Pokémon into 8 Battles, decides them and updates
+    /// the Standings. The API picks the Round; simultaneous calls are processed one after another.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <returns>The Round just played, with the updated Standings</returns>
+    /// <response code="201">The Round was played; Location points to it</response>
+    /// <response code="404">No Tournament is held under that id</response>
+    /// <response code="409">The Tournament is already Complete</response>
+    /// <response code="429">Rate limit exceeded</response>
+    /// <response code="500">An unexpected error occurred</response>
+    [HttpPost("{id:guid}/rounds")]
+    [EnableRateLimiting(RateLimitPolicies.RoundByRound)]
+    [ProducesResponseType(typeof(ProcessedRoundDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status409Conflict)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult ProcessRound(Guid id)
+    {
+        try
+        {
+            var round = _tournamentService.ProcessRound(id);
+            return Created(Url.Action(nameof(GetRound), new { id, roundNumber = round.RoundNumber }), round);
+        }
+        catch (TournamentNotFoundException)
+        {
+            return TournamentNotFound(id);
+        }
+        catch (TournamentCompleteException)
+        {
+            _logger.LogWarning("Process Round refused: tournament {TournamentId} is already complete", id);
+            return Conflict(new { error = "Tournament is already complete." });
+        }
+        catch (Exception ex)
+        {
+            return UnexpectedError(ex, "processing a round of tournament", id);
+        }
+    }
+
+    /// <summary>
+    /// Gets a played Round of a Tournament with its 8 Battles.
+    /// </summary>
+    /// <param name="id">The Tournament's id</param>
+    /// <param name="roundNumber">The Round's number, 1 to 15</param>
+    /// <returns>The Round</returns>
+    /// <response code="200">Returns the Round</response>
+    /// <response code="404">No Tournament is held under that id, or the Round is outside 1–15 or not played yet</response>
+    /// <response code="429">Rate limit exceeded</response>
+    /// <response code="500">An unexpected error occurred</response>
+    [HttpGet("{id:guid}/rounds/{roundNumber:int}")]
+    [EnableRateLimiting(RateLimitPolicies.RoundByRound)]
+    [ProducesResponseType(typeof(RoundDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public IActionResult GetRound(Guid id, int roundNumber)
+    {
+        try
+        {
+            return Ok(_tournamentService.GetRound(id, roundNumber));
+        }
+        catch (TournamentNotFoundException)
+        {
+            return TournamentNotFound(id);
+        }
+        catch (RoundNotFoundException)
+        {
+            _logger.LogWarning("Round {RoundNumber} of tournament {TournamentId} was not found", roundNumber, id);
+            return NotFound(new { error = "Round not found." });
+        }
+        catch (Exception ex)
+        {
+            return UnexpectedError(ex, "getting a round of tournament", id);
+        }
+    }
+
+    private NotFoundObjectResult TournamentNotFound(Guid tournamentId)
+    {
+        // Expected after an API restart or with a stale link, so the id is enough without the stack trace
+        _logger.LogWarning("Tournament {TournamentId} was not found", tournamentId);
+        return NotFound(new { error = "Tournament not found." });
+    }
+
+    private ObjectResult UnexpectedError(Exception ex, string operation, Guid tournamentId)
+    {
+        _logger.LogError(ex, "An unexpected error occurred while {Operation} {TournamentId}", operation, tournamentId);
+        return Problem("An unexpected error occurred", statusCode: 500);
     }
 }

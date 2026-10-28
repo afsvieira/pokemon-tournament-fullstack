@@ -1,6 +1,7 @@
 using System.Net;
 using System.Text.Json;
 using Api.Application;
+using Api.Domain;
 using Moq;
 
 namespace Api.Tests;
@@ -15,6 +16,12 @@ public class RoundByRoundEndpointsTests
 
     private static readonly string[] StandingsEntryProperties =
         ["id", "name", "type", "baseExperience", "imageUrl", "wins", "losses", "ties", "winRate"];
+
+    private static readonly string[] ProcessedRoundProperties = ["roundNumber", "battles", "standings"];
+
+    private static readonly string[] BattleProperties = ["id", "roundNumber", "pokemon1", "pokemon2", "winnerId"];
+
+    private static readonly string[] BattlePokemonProperties = ["id", "name", "type", "baseExperience", "imageUrl"];
 
     /// <summary>
     /// Verifies that Start answers 201 with a Location pointing at the new Tournament, and a body with the
@@ -122,6 +129,164 @@ public class RoundByRoundEndpointsTests
         // Assert
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         Assert.Empty(await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that Process Round answers 201 with a Location pointing at the new Round, and a body with the Round's
+    /// 8 Battles and the 16 Standings entries; with every Pokémon alike, each Battle is a tie with a null winner.
+    /// </summary>
+    [Fact]
+    public async Task ProcessRound_ShouldReturn201WithLocationAndRound_WhenTournamentIsNotComplete()
+    {
+        // Arrange - Same type and base experience for all, so every Battle ties
+        var pokemonApiClient = new Mock<IPokemonApiClient>();
+        pokemonApiClient
+            .Setup(client => client.FetchRandomPokemonsAsync(It.IsAny<int>()))
+            .ReturnsAsync(() => TestPokemon.FromIds(TestPokemon.SixteenIds)
+                .Select(pokemon => { pokemon.BaseExperience = 100; return pokemon; })
+                .ToList());
+        await using var factory = TestApi.Create(pokemonApiClient.Object);
+        var client = factory.CreateClient();
+        var tournamentUrl = await StartTournamentAsync(client);
+
+        // Act
+        using var response = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        Assert.Equal($"{tournamentUrl}/rounds/1", response.Headers.Location?.OriginalString);
+
+        var round = await ReadJsonAsync(response);
+        Assert.Equal(ProcessedRoundProperties, PropertyNames(round));
+        Assert.Equal(1, round.GetProperty("roundNumber").GetInt32());
+
+        var standings = round.GetProperty("standings").EnumerateArray().ToList();
+        Assert.Equal(TestPokemon.SixteenIds, standings.Select(entry => entry.GetProperty("id").GetInt32()));
+        Assert.All(standings, entry => Assert.Equal(StandingsEntryProperties, PropertyNames(entry)));
+
+        var battles = round.GetProperty("battles").EnumerateArray().ToList();
+        Assert.Equal(Enumerable.Range(1, 8), battles.Select(battle => battle.GetProperty("id").GetInt32()));
+        Assert.All(battles, battle =>
+        {
+            Assert.Equal(BattleProperties, PropertyNames(battle));
+            Assert.Equal(BattlePokemonProperties, PropertyNames(battle.GetProperty("pokemon1")));
+            Assert.Equal(BattlePokemonProperties, PropertyNames(battle.GetProperty("pokemon2")));
+            Assert.Equal(JsonValueKind.Null, battle.GetProperty("winnerId").ValueKind);
+        });
+    }
+
+    /// <summary>
+    /// Verifies that Process Round on a Complete Tournament answers 409 with a generic error.
+    /// </summary>
+    [Fact]
+    public async Task ProcessRound_ShouldReturn409WithError_WhenTournamentIsComplete()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+        var tournamentUrl = await StartTournamentAsync(client);
+        for (var round = 1; round <= Tournament.RoundCount; round++)
+        {
+            using var roundResponse = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+        }
+
+        // Act
+        using var response = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+        Assert.Equal("""{"error":"Tournament is already complete."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that Process Round on a Tournament the API doesn't hold answers 404 with a generic error.
+    /// </summary>
+    [Fact]
+    public async Task ProcessRound_ShouldReturn404WithError_WhenTournamentIsUnknown()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.PostAsync($"{TestApi.TournamentUrl}/{Guid.NewGuid()}/rounds", content: null);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("""{"error":"Tournament not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that the Location returned by Process Round answers 200 with that Round's number and Battles.
+    /// </summary>
+    [Fact]
+    public async Task GetRound_ShouldReturn200WithTheRound_WhenItWasPlayed()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+        var tournamentUrl = await StartTournamentAsync(client);
+        using var processResponse = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+        var processedRound = await ReadJsonAsync(processResponse);
+
+        // Act
+        using var response = await client.GetAsync(processResponse.Headers.Location);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var round = await ReadJsonAsync(response);
+        Assert.Equal(["roundNumber", "battles"], PropertyNames(round));
+        Assert.Equal(1, round.GetProperty("roundNumber").GetInt32());
+        Assert.Equal(processedRound.GetProperty("battles").GetRawText(), round.GetProperty("battles").GetRawText());
+    }
+
+    /// <summary>
+    /// Verifies that a Round outside 1–15, or not played yet, answers 404 with a generic error.
+    /// </summary>
+    /// <param name="roundNumber">A Round number with no played Round behind it, once Round 1 is played</param>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(16)]
+    public async Task GetRound_ShouldReturn404WithError_WhenRoundWasNotPlayed(int roundNumber)
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+        var tournamentUrl = await StartTournamentAsync(client);
+        using var processResponse = await client.PostAsync($"{tournamentUrl}/rounds", content: null);
+
+        // Act
+        using var response = await client.GetAsync($"{tournamentUrl}/rounds/{roundNumber}");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("""{"error":"Round not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    /// <summary>
+    /// Verifies that asking for a Round of a Tournament the API doesn't hold answers 404 "Tournament not found.",
+    /// not "Round not found.".
+    /// </summary>
+    [Fact]
+    public async Task GetRound_ShouldReturn404WithTournamentError_WhenTournamentIsUnknown()
+    {
+        // Arrange
+        await using var factory = TestApi.CreateWithSixteenPokemon();
+        var client = factory.CreateClient();
+
+        // Act
+        using var response = await client.GetAsync($"{TestApi.TournamentUrl}/{Guid.NewGuid()}/rounds/1");
+
+        // Assert
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        Assert.Equal("""{"error":"Tournament not found."}""", await response.Content.ReadAsStringAsync());
+    }
+
+    private static async Task<string> StartTournamentAsync(HttpClient client)
+    {
+        using var response = await client.PostAsync(TestApi.TournamentUrl, content: null);
+        return response.Headers.Location!.OriginalString;
     }
 
     private static async Task<JsonElement> ReadJsonAsync(HttpResponseMessage response)

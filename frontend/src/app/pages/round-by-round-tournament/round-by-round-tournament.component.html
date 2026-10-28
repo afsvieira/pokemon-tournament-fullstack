@@ -37,19 +37,32 @@
       </button>
     </div>
   } @else if (tournament) {
-    <!-- Tournament header -->
+    <!-- Tournament header with Process Round, or the Complete badge after Round 15 -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
       <h1 class="h3 mb-0">Tournament · started {{ tournament.startedAt | date: 'dd/MM HH:mm' }}</h1>
-      <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
-    </div>
-
-    <!-- Round panel -->
-    <div class="card border-secondary mb-4 round-panel">
-      <div class="card-body text-center text-muted py-4">
-        <i class="fas fa-hourglass-half me-2"></i>
-        No Rounds yet
+      <div class="d-flex flex-wrap align-items-center gap-3">
+        <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
+        @if (isComplete) {
+          <span class="badge rounded-pill text-bg-success fs-6 px-3 py-2 complete-badge">✔ Complete</span>
+        } @else {
+          <button
+            type="button"
+            class="btn btn-primary px-4 process-round"
+            [disabled]="isProcessing"
+            (click)="processRound()">
+            @if (isProcessing) {
+              <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+              Processing...
+            } @else {
+              <i class="fas fa-forward-step me-2"></i>
+              Process Round
+            }
+          </button>
+        }
       </div>
     </div>
+
+    <app-round-panel [round]="currentRound"></app-round-panel>
 
     <!-- Standings -->
     <h2 class="h4 mb-3">Standings</h2>
@@ -68,3 +81,6 @@
     </div>
   }
 }
+
+<!-- Kept outside the page states, so a 409's toast survives the reload it triggers -->
+<app-error-toast [message]="toastMessage" (dismissed)="hideToast()"></app-error-toast>

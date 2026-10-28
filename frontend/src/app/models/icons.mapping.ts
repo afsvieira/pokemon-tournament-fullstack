@@ -22,3 +22,8 @@ export const Icons: IconsMapping = {
   dragon: 'fa-solid fa-dragon',
   fairy: 'fa-solid fa-wand-sparkles'
 };
+
+// Helper function to get the Font Awesome classes for a Pokémon type, with a fallback for unmapped types
+export function getTypeIconClass(type: string): string {
+  return Icons[type.toLowerCase()] || 'fa-solid fa-question';
+}

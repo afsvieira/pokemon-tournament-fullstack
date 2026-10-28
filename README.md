@@ -116,6 +116,8 @@ Tournaments are kept in memory until the API restarts; they never expire.
 |------|-------|---------|------------|
 | POST | `/pokemon/tournament` | `201`, `Location: /pokemon/tournament/{id}`, the Tournament | `StartTournamentPolicy` |
 | GET | `/pokemon/tournament/{id}` | `200`, the Tournament | `RoundByRoundPolicy` |
+| POST | `/pokemon/tournament/{id}/rounds` | `201`, `Location: /pokemon/tournament/{id}/rounds/{roundNumber}`, the processed Round | `RoundByRoundPolicy` |
+| GET | `/pokemon/tournament/{id}/rounds/{roundNumber}` | `200`, the Round | `RoundByRoundPolicy` |
 
 **Start** (`POST /pokemon/tournament`) takes no body, picks 16 random Pokémon and returns the new Tournament, every Pokémon at 0 wins, losses and ties:
 
@@ -156,6 +158,37 @@ A well-formed id the API doesn't hold (for example after a restart) answers `404
 
 An id that isn't a Guid matches no route and answers `404` with an empty body.
 
+**Process Round** (`POST /pokemon/tournament/{id}/rounds`) takes no body: the API plays the next of the 15 Rounds. The 16 Pokémon are paired with the circle method over the Start order, so over 15 Rounds every Pokémon meets every other exactly once, and each Battle is decided by the Battle Rules below. It returns the Round's 8 Battles and the updated Standings:
+
+```json
+{
+  "roundNumber": 1,
+  "battles": [
+    {
+      "id": 1,
+      "roundNumber": 1,
+      "pokemon1": { "id": 25, "name": "Pikachu", "type": "electric", "baseExperience": 112, "imageUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png" },
+      "pokemon2": { "id": 7, "name": "Squirtle", "type": "water", "baseExperience": 63, "imageUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png" },
+      "winnerId": 25
+    }
+  ],
+  "standings": [
+    { "id": 25, "name": "Pikachu", "type": "electric", "baseExperience": 112, "imageUrl": "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png", "wins": 1, "losses": 0, "ties": 0, "winRate": 100 }
+  ]
+}
+```
+
+- Battle ids run 1–120 within the Tournament, in play order: Round r holds Battles 8(r−1)+1 … 8r.
+- `pokemon1` is whichever Pokémon comes first in the Start order; `winnerId` is `null` on a tie.
+- Simultaneous calls on the same Tournament are processed one after another, so Round numbers are never duplicated or skipped.
+- Once all 15 Rounds are played, the Tournament is Complete and Process Round answers `409 Conflict`:
+
+```json
+{ "error": "Tournament is already complete." }
+```
+
+**Get a Round** (`GET /pokemon/tournament/{id}/rounds/{roundNumber}`) returns a played Round as `{ roundNumber, battles }`. A Round outside 1–15 or not yet played answers `404` with `{ "error": "Round not found." }`.
+
 ## ⚔️ Battle Rules
 
 ### Type Advantages
@@ -178,7 +211,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 
 ### Frontend Features
 - **Navigation**: Switch between the Instant Simulation (`/tournament`) and Round by Round (`/round-by-round`)
-- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), with the 16 Pokémon's Standings sorted locally. A Tournament the API no longer holds shows a page explaining that Tournaments live in memory until the API restarts, with links to the Tournament History and to start a new one
+- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), then press Process Round to play its 15 Rounds one at a time. Each Round lists its 8 Battles, who fought whom and who won, and the Standings cards update and sort locally. Reopening the page shows the last played Round; after Round 15 a Complete badge replaces the button. A Tournament the API no longer holds shows a page explaining that Tournaments live in memory until the API restarts, with links to the Tournament History and to start a new one
 - **Tournament Generation**: Fetch and simulate battles for 16 random Pokémon
 - **Dynamic Sorting**: Sort results by wins, losses, ties, name, or ID
 - **Battle History**: View detailed battle records for each Pokémon
@@ -190,7 +223,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 
 ### Backend Features
 - **Tournament Simulation**: Complete round-robin tournament (120 battles total)
-- **Round-by-round Tournaments**: Started with 16 random Pokémon and held in memory until the API restarts
+- **Round-by-round Tournaments**: Started with 16 random Pokémon, played one Round at a time on a circle-method schedule, and held in memory until the API restarts
 - **Type-Based Combat**: Implements Pokémon type advantage system
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
@@ -217,11 +250,11 @@ dotnet test
 - Battle logic and type advantages (10 tests)
 - `TournamentPokemon` statistics and win rate (6 tests)
 - Service input validation, with PokéAPI faked (4 tests)
-- Round-by-round service operations, with PokéAPI and the clock faked (3 tests)
-- Round-by-round endpoints through the real HTTP pipeline (5 tests)
+- Round-by-round service operations, with PokéAPI and the clock faked: Start, the 15-Round schedule, Standings, Complete, parallel Process Round and unknown Tournaments and Rounds (10 tests)
+- Round-by-round endpoints through the real HTTP pipeline (13 tests)
 - Rate limiting and its configuration through the real HTTP pipeline (9 tests)
 - PokéAPI client and its cache, with PokéAPI stubbed (4 tests)
-- **Total: 41 tests**
+- **Total: 56 tests**
 
 ### Run Frontend Tests
 
@@ -241,9 +274,9 @@ npx ng test --watch=false --browsers=ChromeHeadless
 - App shell, navigation and theme toggle (5 tests)
 - Tournament page, including the rate-limit error message (3 tests)
 - Tournament History page, through the app routes: Start and its error toast (2 tests)
-- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, and the "no longer exists" page with its two actions (6 tests)
+- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, and Process Round with its errors (12 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 32 tests**
+- **Total: 38 tests**
 
 ## 🛠️ Development
 
@@ -329,14 +362,15 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 
 ### API Errors
 - **400 Bad Request**: Invalid parameters
-- **404 Not Found**: A Tournament the API doesn't hold (`{ "error": "Tournament not found." }`), or a malformed id (empty body)
+- **404 Not Found**: A Tournament the API doesn't hold (`{ "error": "Tournament not found." }`), a Round not played yet (`{ "error": "Round not found." }`), or a malformed id (empty body)
+- **409 Conflict**: Process Round on a Complete Tournament
 - **429 Too Many Requests**: Rate limit exceeded and the queue, if the policy has one, is full
 - **502 Bad Gateway**: Start couldn't get 16 Pokémon from PokéAPI
 - **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable for a Pokémon not yet cached
 
 ### Frontend Errors
 - **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429`
-- **Round by Round**: a failed Start shows a toast with the API's `error` message, or one based on the status; a Tournament page that fails to load shows the message inline with a Retry button, except a `404`, which shows that the Tournament no longer exists
+- **Round by Round**: a failed Start shows a toast with the API's `error` message, or one based on the status; a failed Process Round shows a toast and leaves the page as it was; a Tournament page that fails to load shows the message inline with a Retry button. Any `404` on the Tournament page shows that the Tournament no longer exists, and a `409` on Process Round (another tab completed the Tournament) reloads the page before showing the API's message
 - **Loading States**: Spinners and disabled buttons
 
 ## 📝 Notes

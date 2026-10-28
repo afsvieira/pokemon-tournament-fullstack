@@ -1,4 +1,10 @@
+@use '../../shared/buttons' as *;
+
 // Round-by-round Tournament page styles
+.btn-primary {
+  @include primary-button;
+}
+
 .back-link {
   color: var(--bs-secondary-color);
   text-decoration: none;
@@ -7,10 +13,4 @@
   &:hover {
     color: var(--bs-emphasis-color);
   }
-}
-
-.round-panel {
-  border-width: 2px;
-  border-radius: 16px;
-  background: transparent;
 }

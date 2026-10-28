@@ -2,7 +2,7 @@ import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 import { BattleHistoryModalComponent } from '../battle-history-modal/battle-history-modal.component';
-import { Icons } from '../../models/icons.mapping';
+import { getTypeIconClass } from '../../models/icons.mapping';
 
 @Component({
   selector: 'app-pokemon-card',
@@ -22,6 +22,6 @@ export class PokemonCardComponent {
   }
 
   getTypeIcon(type: string): string {
-    return Icons[type.toLowerCase()] || 'fa-solid fa-question';
+    return getTypeIconClass(type);
   }
 }
