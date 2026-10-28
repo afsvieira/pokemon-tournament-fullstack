@@ -8,9 +8,17 @@ Pokémon from the Kanto region battle each other in a round-robin, decided by ty
 A round-robin between 16 Pokémon, held in memory under an id and processed one Round at a time.
 _Avoid_: Bracket, season, competition
 
+**Start order**:
+The order in which a Tournament's 16 Pokémon were picked at Start; it fixes the Round pairings and the order of the Standings.
+_Avoid_: Seed, draw order
+
 **Round**:
 One step of a Tournament: 8 Battles in which each of the 16 Pokémon fights exactly once. A Tournament has 15 Rounds.
 _Avoid_: Stage, matchday
+
+**Complete**:
+A Tournament whose 15 Rounds have all been processed.
+_Avoid_: Finished, over, ended
 
 **Battle**:
 One fight between two Pokémon, decided by the battle rules; it ends in a win, a loss or a tie.

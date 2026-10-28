@@ -17,11 +17,16 @@ Every decision `/to-spec` needs to write `.scratch/round-by-round-tournament/spe
 
 <!-- the index: one line per closed ticket, enough to judge relevance, then zoom the link for the detail the ticket holds -->
 
+- [New endpoints contract](issues/01-new-endpoints-contract.md): REST routes under `pokemon/tournament` (`POST` Start, `POST {id}/rounds`, `GET {id}`, `GET {id}/rounds/{n}`, `GET {id}/battles/{battleId}`, `GET history`); Guid Tournament ids, Battle ids 1–120 in play order; Battles carry a nullable `winnerId`; generic `{ error }` bodies with 404/409/502.
+- [Rate limit for the new endpoints](issues/02-rate-limit-for-new-endpoints.md): two new per-IP policies with their own counters: Start 10/min with no queue, Process Round and new GETs 60/min with no queue; Instant Simulation untouched; empty 429 body; every policy's numbers move to `appsettings.json`, failing at startup if missing.
+- [Performance improvement worth adding](issues/03-performance-improvement.md): in-memory cache of PokéAPI responses by Pokémon id (singleton `IMemoryCache`, immutable snapshots, lazy, no expiry), shared by Start and the Instant Simulation; nothing else.
+- [Tournament in memory](issues/04-tournament-in-memory.md): circle-method pairings over the Start order, each Round decided when processed; singleton `InMemoryTournamentRepository`; `TournamentPokemon` reused as Standings; new methods on `TournamentService`; one lock per Tournament.
+- [Round-by-round frontend flow](issues/05-frontend-flow.md): `/round-by-round` (Tournament History with Start) and `/round-by-round/:id` (Round chips, Round panel, Battle modal, sortable Standings cards) beside an unchanged `/tournament`; `RoundByRoundService` with typed models and a shared `API_BASE_URL`.
+- [Error experience in the new views](issues/06-error-experience-in-new-views.md): API `error` shown as is, else a fixed message by status; inline panel with Retry when a page fails to load, toast when an action fails, message inside the Battle modal; any 404 on a Tournament shows a "no longer exists" page; a 409 in a stale tab reloads the Tournament.
+
 ## Not yet specified
 
 <!-- in-scope fog you can't ticket yet; graduates as the frontier advances -->
-
-- Error experience in the new views: unknown Tournament (404), rate limit hit (429), PokéAPI down on Start. Hangs on [New endpoints contract](issues/01-new-endpoints-contract.md) and [Rate limit for the new endpoints](issues/02-rate-limit-for-new-endpoints.md).
 
 ## Out of scope
 
