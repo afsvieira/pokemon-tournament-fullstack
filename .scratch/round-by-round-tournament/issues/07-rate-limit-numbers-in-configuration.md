@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] Application configuration has a `RateLimiting` section with a `TournamentPolicy` sub-section: `PermitLimit` 10, `WindowSeconds` 60, `QueueLimit` 5.
 - [x] `TournamentPolicy` takes its permit limit, window and queue limit from that sub-section. The fixed-window type and the client-IP partition stay in code.
@@ -15,3 +15,7 @@
 - [x] The existing rate-limiting test still passes.
 - [x] A new `WebApplicationFactory<Program>` test shows the API failing to start when the `TournamentPolicy` sub-section is missing.
 - [x] `.claude/ARCHITECTURE.md` ("Values that change together") and the README say that the rate-limit numbers live in configuration.
+
+## Comments
+
+**Done** in commit `734a593` (refactor(api): read rate-limit numbers from configuration).

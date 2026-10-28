@@ -6,7 +6,7 @@
 
 **Blocked by:** 07 (Rate-limit numbers in configuration).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **API**
 
@@ -60,3 +60,7 @@
   - A failed Start shows a toast.
   - A load failure shows the inline panel, and Retry reloads the page.
 - [x] The README documents Start and `GET {id}` and their rate limits. The request flow in `.claude/ARCHITECTURE.md` includes the repository, and "Values that change together" lists the new policies and `API_BASE_URL`.
+
+## Comments
+
+**Done** in commit `ffa1621` (feat: start a round-by-round Tournament and show its 16 Pokémon).

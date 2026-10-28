@@ -6,7 +6,7 @@
 
 **Blocked by:** 11 (Process Rounds to the end).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **API**
 
@@ -44,3 +44,5 @@
 2. **The page fetches and the modal only displays.** The page calls `getBattle` and passes the Battle or the error message to the modal as inputs, so the 404 goes through `handledAsTournamentGone` like every other request on the page. The cost is more state on the page: the open Battle, its loading flag and its error.
 
 Either way, cover it at the routed-pages seam: open a Battle, flush a 404, and expect the "no longer exists" page.
+
+**Done** in commit `37e4a58` (feat: review earlier Rounds and Battles of a Tournament).

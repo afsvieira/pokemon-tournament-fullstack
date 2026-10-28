@@ -6,7 +6,7 @@
 
 **Blocked by:** 10 (A Tournament that no longer exists).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **API**
 
@@ -55,3 +55,7 @@
   - Loading the page shows the last Round.
   - A failed Process Round shows a toast, a 409 reloads the page and shows a toast, and a 404 shows the "no longer exists" page.
 - [x] The README documents Process Round and the Round GET.
+
+## Comments
+
+**Done** in commit `2c77e97` (feat: process Rounds to the end of a Tournament).

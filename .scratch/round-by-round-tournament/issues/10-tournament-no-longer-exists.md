@@ -6,7 +6,7 @@
 
 **Blocked by:** 09 (Start a Tournament and see its 16 Pokémon).
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `GET /pokemon/tournament/{id}` with a well-formed Guid the API doesn't hold answers 404 `{ "error": "Tournament not found." }`.
 - [x] A malformed id matches no route and answers 404 with an empty body.
@@ -17,3 +17,7 @@
   - Service seam: an unknown Tournament is reported.
   - HTTP seam: both 404s.
   - Routed-pages seam: the page appears for a 404, and both of its actions work.
+
+## Comments
+
+**Done** in commit `9e837d4` (feat: show a page for a Tournament that no longer exists).

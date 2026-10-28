@@ -1,6 +1,6 @@
 # Spec: Round-by-round Tournament
 
-Status: ready-for-agent
+Status: done
 Map: [Round-by-round Tournament](map.md)
 
 ## Problem Statement
@@ -387,3 +387,4 @@ The cache sits behind `IPokemonApiClient`, so this is the only seam that reaches
   - [Round-by-round frontend flow](issues/05-frontend-flow.md)
   - [Error experience in the new views](issues/06-error-experience-in-new-views.md)
 - Git: built on `feature/round-by-round-tournament`, one commit per implementation ticket, one PR to `main` at the end.
+- Status: done. Tickets 07–13 are all done on `feature/round-by-round-tournament`; each ticket's Comments name its commit.

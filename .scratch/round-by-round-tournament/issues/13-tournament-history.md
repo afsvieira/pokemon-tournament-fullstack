@@ -6,7 +6,7 @@
 
 **Blocked by:** 09 (Start a Tournament and see its 16 Pokémon).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **API**
 
@@ -33,3 +33,7 @@
   - The empty state shows when there are no Tournaments.
   - A load failure shows the inline panel, and Retry reloads the list.
 - [x] The README documents the History endpoint.
+
+## Comments
+
+**Done** in commit `b6f8115` (feat: list the Tournament History and reopen a Tournament from it).

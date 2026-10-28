@@ -6,7 +6,7 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
 - [x] `PokemonApiClient` keeps each Pokémon's data in a singleton memory cache keyed by Pokémon id. The cache is registered in DI, not held in a field of the transient typed client.
 - [x] Each cache entry is an immutable snapshot: id, name, primary type, base experience and image URL.
@@ -19,3 +19,7 @@
   - Changing the returned objects doesn't leak into the next call.
   - A failed response isn't cached and is requested again on the next call.
 - [x] The request flow in `.claude/ARCHITECTURE.md` mentions the cache, and its claim that nothing is cached is corrected. The README mentions the cache.
+
+## Comments
+
+**Done** in commit `d13864f` (feat(api): cache PokéAPI data in memory by Pokémon id).
