@@ -8,17 +8,18 @@ This application fetches 16 random Pokémon from the first generation (Kanto reg
 
 ## 🏗️ Architecture
 
-- **Backend**: .NET 8 Minimal API with clean architecture
+- **Backend**: ASP.NET Core Web API (.NET 8) with controllers, split into Controllers, Application, Domain and Infrastructure layers
 - **Frontend**: Angular 18 with standalone components
 - **External API**: PokéAPI (https://pokeapi.co)
 - **Styling**: Bootstrap 5 with custom SCSS
-- **Testing**: XUnit (.NET) and Jasmine/Karma (Angular)
+- **Testing**: xUnit + Moq (.NET) and Jasmine/Karma (Angular)
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
 - .NET 8 SDK
+- .NET 9 runtime, needed only to run the API tests (see [Run API Tests](#run-api-tests))
 - Node.js 18+ and npm
 - Git
 
@@ -118,7 +119,7 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 - **Tournament Generation**: Fetch and simulate battles for 16 random Pokémon
 - **Dynamic Sorting**: Sort results by wins, losses, ties, name, or ID
 - **Battle History**: View detailed battle records for each Pokémon
-- **Dark/Light Theme**: Toggle between themes with persistent preference
+- **Dark/Light Theme**: Toggle between themes (dark by default)
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **Error Handling**: User-friendly error messages with toast notifications
 - **Loading States**: Visual feedback during API calls
@@ -129,7 +130,7 @@ GET http://localhost:5268/pokemon/tournament/statistics?sortBy=wins&sortDirectio
 - **Statistics Calculation**: Automatic win rate calculation
 - **Flexible Sorting**: Support for multiple sort fields and directions
 - **Input Validation**: Comprehensive parameter validation
-- **Rate Limiting**: Fixed window limiter (10 requests/minute per IP)
+- **Rate Limiting**: Fixed window limiter (10 requests/minute per IP, up to 5 extra requests queued)
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
@@ -143,11 +144,17 @@ cd Api.Tests
 dotnet test
 ```
 
+`Api.Tests` targets .NET 9 while `Api` targets .NET 8 ([#10](https://github.com/afsvieira/pokemon-tournament-fullstack/issues/10)). Without a .NET 9 runtime, let the test host roll forward to a newer one:
+
+```bash
+DOTNET_ROLL_FORWARD=Major dotnet test
+```
+
 **Test Coverage:**
-- Battle logic and type advantages (8 tests)
-- Domain model validation (3 tests)  
-- Input validation and error handling (3 tests)
-- **Total: 14 tests**
+- Battle logic and type advantages (10 tests)
+- `TournamentPokemon` statistics and win rate (6 tests)
+- Service input validation (4 tests), which currently pass even without validation ([#9](https://github.com/afsvieira/pokemon-tournament-fullstack/issues/9))
+- **Total: 20 tests**
 
 ### Run Frontend Tests
 
@@ -157,10 +164,10 @@ npm test
 ```
 
 **Test Coverage:**
-- Component initialization and rendering (8 tests)
-- User interactions and events (6 tests)
-- Service HTTP communication (2 tests)
-- Utility functions and models (6 tests)
+- UI components: pokemon card (6), sort controls (5), battle history modal (2), rules modal (1)
+- App shell and theme toggle (4 tests)
+- Tournament page (2 tests)
+- Tournament service HTTP communication (2 tests)
 - **Total: 22 tests**
 
 ## 🛠️ Development
@@ -169,12 +176,16 @@ npm test
 
 ```
 pokemon-tournament-fullstack/
+├── .claude/skills/               # Claude Code agent skills used in this repo
 ├── Api/                          # .NET 8 Web API
-│   ├── Application/              # Business logic layer
-│   ├── Domain/                   # Domain models and enums
-│   ├── Dtos/                     # Data transfer objects
-│   └── Program.cs                # API configuration
-├── Api.Tests/                    # XUnit test project
+│   ├── Controllers/              # HTTP endpoint and query validation
+│   ├── Application/              # Tournament orchestration (service + interface)
+│   ├── Domain/                   # Battle rules, domain models and enums
+│   ├── Infrastructure/           # PokéAPI HTTP client
+│   ├── Dtos/                     # PokéAPI response shapes
+│   ├── Shared/                   # String helpers
+│   └── Program.cs                # DI, rate limiting, CORS, Swagger
+├── Api.Tests/                    # xUnit test project
 ├── frontend/                     # Angular 18 application
 │   └── src/app/
 │       ├── components/           # Reusable UI components
@@ -187,10 +198,11 @@ pokemon-tournament-fullstack/
 ### Key Technologies
 
 **Backend:**
-- .NET 8 Minimal API
-- System.Text.Json for serialization
-- HttpClient for external API calls
-- XUnit for testing
+- ASP.NET Core 8 Web API with controllers
+- System.Text.Json for serialization (enums as strings)
+- Typed HttpClient for external API calls
+- Swashbuckle for Swagger/OpenAPI
+- xUnit and Moq for testing
 
 **Frontend:**
 - Angular 18 with standalone components
@@ -209,11 +221,13 @@ The API runs on `http://localhost:5268` by default. To change the port, modify `
 
 The frontend expects the API at `http://localhost:5268`. To change this, update the `apiUrl` in `src/app/services/tournament.service.ts`.
 
+The API only accepts cross-origin requests from `http://localhost:4200`. If the frontend runs elsewhere, update the `AllowAngular` CORS policy in `Api/Program.cs`.
+
 ## 📊 Performance
 
 - **API Response Time**: ~2-3 seconds (includes external API calls)
 - **Battle Simulation**: 120 battles processed in <1ms
-- **Frontend Rendering**: Optimized with OnPush change detection
+- **Re-sorting**: Changing the sort order re-sorts the loaded results in the browser without calling the API again
 - **Bundle Size**: ~2.5MB (including Bootstrap and Font Awesome)
 
 ## 🚨 Error Handling
@@ -227,7 +241,6 @@ The frontend expects the API at `http://localhost:5268`. To change this, update 
 ### Frontend Errors
 - **Connection Errors**: Toast notifications with retry suggestions
 - **Loading States**: Spinners and disabled buttons
-- **Validation**: Real-time form validation
 
 ## 📝 Notes
 
