@@ -8,18 +8,24 @@
 
 **Blocked by:** 02 (Standings as a table with Position).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **UI**
 
-- [ ] A polite live region under the page header announces "Round N processed" after each successful Process Round; it is empty otherwise and is not announced on load or chip selection.
-- [ ] The Round panel's heading is programmatically focusable and receives focus when a new Round lands from Process Round, not when a chip is clicked.
-- [ ] The Round panel's border pulses once when a new Round lands; no pulse under `prefers-reduced-motion`.
-- [ ] When the Tournament is Complete the badge is accompanied by one line: "Complete · Alakazam leads the Standings 14–0–1". With several Pokémon on Position 1: "Complete · Alakazam and Primeape lead the Standings 14–0–1" (names joined with commas and "and", in default order). The record is wins–losses–ties.
-- [ ] The line uses "leads the Standings"; "champion", "winner of the Tournament" and "ranking" do not appear.
-- [ ] The line also appears when a Complete Tournament is reopened from the Tournament History.
+- [x] A polite live region under the page header announces "Round N processed" after each successful Process Round; it is empty otherwise and is not announced on load or chip selection.
+- [x] The Round panel's heading is programmatically focusable and receives focus when a new Round lands from Process Round, not when a chip is clicked.
+- [x] The Round panel's border pulses once when a new Round lands; no pulse under `prefers-reduced-motion`.
+- [x] When the Tournament is Complete the badge is accompanied by one line: "Complete · Alakazam leads the Standings 14–0–1". With several Pokémon on Position 1: "Complete · Alakazam and Primeape lead the Standings 14–0–1" (names joined with commas and "and", in default order). The record is wins–losses–ties.
+- [x] The line uses "leads the Standings"; "champion", "winner of the Tournament" and "ranking" do not appear.
+- [x] The line also appears when a Complete Tournament is reopened from the Tournament History.
 
 **Tests and docs**
 
-- [ ] Routed-pages seam, Round-by-Round page spec: the live region text after Process Round and its absence after a chip click; focus on the Round heading after Process Round; the Complete line naming one leader and, with a shared lead, two leaders; the line on reopening a Complete Tournament.
-- [ ] README's Round by Round feature bullets mention the announcement and the Complete line.
+- [x] Routed-pages seam, Round-by-Round page spec: the live region text after Process Round and its absence after a chip click; focus on the Round heading after Process Round; the Complete line naming one leader and, with a shared lead, two leaders; the line on reopening a Complete Tournament.
+- [x] README's Round by Round feature bullets mention the announcement and the Complete line.
+
+## Comments
+
+**Done** in commit 48be665 (feat(frontend): say what changed after Process Round and name the leader at Complete).
+
+Notes: the "✔ Complete" badge is hidden from assistive technology, since the Complete line next to it starts with "Complete" and would otherwise be read twice. The Round panel's header became an h2 so it can be a focusable heading. The live region is cleared when Process Round starts, on load and on a chip, so it is empty after a failed Process Round too.
