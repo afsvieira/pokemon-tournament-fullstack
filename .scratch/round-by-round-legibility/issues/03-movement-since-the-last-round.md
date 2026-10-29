@@ -28,4 +28,4 @@
 
 **Done** in commit 49c39d3 (feat(frontend): show each Pokémon's Movement since the last Round processed on the page).
 
-Notes: the README had no earlier text naming the cache and the rate limits as additions, so it gains an "Additions beyond the assessment" subsection naming all three. The accessible text on load is "no change", as this ticket lists it; the model keeps null (no previous Standings) apart from 0 (stayed), so a distinct wording is a one-line change if story 18 wants it. A 409 on Process Round reloads the page, which resets the Movement to dashes: the page didn't witness that Round.
+Notes: the README had no earlier text naming the cache and the rate limits as additions, so it gains an "Additions beyond the assessment" subsection naming all three. The accessible text on load was "no change", as this ticket lists it; the pre-PR review applied story 18 instead, so before any Round is processed on the page the dash reads "no Round processed yet" and "no change" is kept for a Pokémon that stayed. A 409 on Process Round reloads the page, which resets the Movement to dashes: the page didn't witness that Round.

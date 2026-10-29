@@ -28,6 +28,8 @@ export class DialogDirective implements AfterViewInit, OnDestroy {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   /** The element that had focus when the dialog opened, to give it back on close */
   private opener: Element | null = null;
+  /** Whether the last mouse press started on the backdrop, so a drag that ends there doesn't close the dialog */
+  private pressedOnBackdrop = false;
 
   ngAfterViewInit(): void {
     this.opener = this.document.activeElement;
@@ -51,18 +53,27 @@ export class DialogDirective implements AfterViewInit, OnDestroy {
     }
   }
 
+  @HostListener('mousedown', ['$event'])
+  onMousedown(event: MouseEvent): void {
+    this.pressedOnBackdrop = event.target === this.host.nativeElement;
+  }
+
   /**
-   * A click on the backdrop, the host itself rather than the dialog inside it, closes the modal
+   * A click on the backdrop, the host itself rather than the dialog inside it, closes the modal.
+   * A click lands on the backdrop too when a text selection started inside the dialog ends outside it,
+   * so only a press that started on the backdrop counts
    */
   @HostListener('click', ['$event'])
   onClick(event: MouseEvent): void {
-    if (event.target === this.host.nativeElement) {
+    if (event.target === this.host.nativeElement && this.pressedOnBackdrop) {
       this.dialogClose.emit();
     }
   }
 
   /**
-   * Keeps Tab inside the dialog: from the last focusable element forward to the first, from the first back to the last
+   * Keeps Tab inside the dialog: from the last focusable element forward to the first, from the first back to the
+   * last, and from anywhere else in the dialog (its root takes focus when non-focusable content is clicked) to the
+   * first or the last rather than out to the page
    */
   private cycleFocus(event: KeyboardEvent): void {
     const focusable = this.focusable();
@@ -71,10 +82,12 @@ export class DialogDirective implements AfterViewInit, OnDestroy {
     }
     const first = focusable[0];
     const last = focusable[focusable.length - 1];
-    if (event.shiftKey && this.document.activeElement === first) {
+    const active = this.document.activeElement;
+    const outside = !focusable.includes(active as HTMLElement);
+    if (event.shiftKey && (active === first || outside)) {
       event.preventDefault();
       last.focus();
-    } else if (!event.shiftKey && this.document.activeElement === last) {
+    } else if (!event.shiftKey && (active === last || outside)) {
       event.preventDefault();
       first.focus();
     }

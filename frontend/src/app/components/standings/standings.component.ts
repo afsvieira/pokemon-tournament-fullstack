@@ -12,7 +12,7 @@ interface StandingsColumn {
   label: string;
   /** The full word assistive technology reads instead of an abbreviated label, e.g. "Wins" */
   name?: string;
-  /** Bootstrap classes shared by the header and its cells: alignment, and hiding the id below the small breakpoint */
+  /** Bootstrap classes of the header cell: alignment, and hiding Movement and the id below the small breakpoint */
   cellClass: string;
 }
 
@@ -90,10 +90,14 @@ export class StandingsComponent {
 
   /**
    * The Movement as the row shows it: the symbol sighted users see ("▲2", "▼1", or a dash when the Pokémon stayed
-   * or no Round was processed on the page), the text assistive technology reads instead, and the cell's colour
+   * or no Round was processed on the page), the text assistive technology reads instead, and the cell's colour.
+   * Before any Round is processed on the page the dash means "not witnessed", not "stayed", and the text says so
    */
   getMovement(entry: StandingsEntry): MovementView {
-    if (!entry.movement) {
+    if (entry.movement === null) {
+      return { symbol: '–', text: 'no Round processed yet', cellClass: 'text-muted' };
+    }
+    if (entry.movement === 0) {
       return { symbol: '–', text: 'no change', cellClass: 'text-muted' };
     }
     if (entry.movement > 0) {

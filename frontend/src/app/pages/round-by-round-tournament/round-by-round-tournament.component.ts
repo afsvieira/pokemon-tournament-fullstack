@@ -56,10 +56,14 @@ export class RoundByRoundTournamentComponent implements OnInit {
   announcement = '';
   /** The Round just played by Process Round, which the Round panel focuses and pulses; null otherwise */
   justProcessedRound: number | null = null;
+  /** The current Standings with their Positions and Movement, sorted by the clicked header; kept, not recomputed */
+  sortedStandings: StandingsEntry[] = [];
 
   private tournamentId = '';
   /** The Standings before the last Round processed on this page, for the Movement; null until one is */
   private previousStandings: TournamentPokemon[] | null = null;
+  /** The current Standings in default order with their Positions, the source of sortedStandings and completeLine */
+  private positionedStandings: StandingsEntry[] = [];
   /** Rounds fetched or played so far, by number; a played Round never changes, so each is fetched once */
   private readonly playedRounds = new Map<number, Round>();
   /** A chip's Round still loading; dropped when another Round takes the panel, so its late answer can't replace it */
@@ -127,7 +131,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
     if (!this.isComplete) {
       return '';
     }
-    const leaders = positionStandings(this.tournament!.standings, null).filter((entry) => entry.position === 1);
+    const leaders = this.positionedStandings.filter((entry) => entry.position === 1);
+    if (leaders.length === 0) {
+      return 'Complete';
+    }
     const verb = leaders.length > 1 ? 'lead' : 'leads';
     const { wins, losses, ties } = leaders[0];
     return `Complete · ${this.joinNames(leaders.map((leader) => leader.name))} ${verb} the Standings ${wins}–${losses}–${ties}`;
@@ -155,21 +162,24 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * The current Standings with their Positions and Movement, sorted locally by the clicked header;
-   * Pokémon equal on that field keep the default order, so the Standings are deterministic
-   */
-  get sortedStandings(): StandingsEntry[] {
-    const direction = this.currentSortDirection === SortDirection.desc ? -1 : 1;
-    return positionStandings(this.tournament?.standings ?? [], this.previousStandings)
-      .sort((a, b) => direction * this.compareBySortField(a, b) || compareByDefaultOrder(a, b));
-  }
-
-  /**
    * Handles a header click in the Standings
    */
   onSortChange(sortOptions: SortOptions): void {
     this.currentSortBy = sortOptions.sortBy;
     this.currentSortDirection = sortOptions.sortDirection;
+    this.updateStandings();
+  }
+
+  /**
+   * Recomputes the Standings shown whenever the Tournament, the previous Standings or the sort change,
+   * rather than on every change detection: Positions and Movement in default order, then the clicked header's
+   * order, where Pokémon equal on that field keep the default order so the Standings are deterministic
+   */
+  private updateStandings(): void {
+    const direction = this.currentSortDirection === SortDirection.desc ? -1 : 1;
+    this.positionedStandings = positionStandings(this.tournament?.standings ?? [], this.previousStandings);
+    this.sortedStandings = [...this.positionedStandings]
+      .sort((a, b) => direction * this.compareBySortField(a, b) || compareByDefaultOrder(a, b));
   }
 
   /**
@@ -202,6 +212,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
     ).subscribe({
       next: ({ tournament, lastRound }) => {
         this.tournament = tournament;
+        this.updateStandings();
         this.showRound(lastRound);
         this.isLoading = false;
         onLoaded?.();
@@ -239,6 +250,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
             roundsPlayed: processedRound.roundNumber,
             standings: processedRound.standings
           };
+          this.updateStandings();
           this.isProcessing = false;
         },
         error: (error: HttpErrorResponse) => {

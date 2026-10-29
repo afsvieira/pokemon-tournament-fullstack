@@ -28,4 +28,4 @@
 
 **Done** in commit 48be665 (feat(frontend): say what changed after Process Round and name the leader at Complete).
 
-Notes: the "✔ Complete" badge is hidden from assistive technology, since the Complete line next to it starts with "Complete" and would otherwise be read twice. The Round panel's header became an h2 so it can be a focusable heading. The live region is cleared when Process Round starts, on load and on a chip, so it is empty after a failed Process Round too.
+Notes: the "✔ Complete" badge was hidden from assistive technology at first, since the Complete line next to it starts with "Complete"; the pre-PR review restored it, so the header keeps its state for assistive technology and the line reads once more below. The Round panel's header became an h2 so it can be a focusable heading. The live region is cleared when Process Round starts, on load and on a chip, so it is empty after a failed Process Round too.

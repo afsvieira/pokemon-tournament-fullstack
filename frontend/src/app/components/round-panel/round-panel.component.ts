@@ -1,5 +1,5 @@
 import { Component, ElementRef, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewChild, afterNextRender, inject } from '@angular/core';
-import { NgClass, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
+import { DOCUMENT, NgClass, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import { Round } from '../../models/round.model';
 import { Battle } from '../../models/battle.model';
 import { BattlePokemon } from '../../models/battle-pokemon.model';
@@ -18,21 +18,23 @@ export class RoundPanelComponent implements OnChanges {
   @Input() round: Round | null = null;
   /** The Round just played by Process Round: its heading takes focus and the panel pulses once; null otherwise */
   @Input() justProcessedRound: number | null = null;
+  /** Emitted with the Battle's id when its row is clicked, so the page can open it */
+  @Output() battleSelected = new EventEmitter<number>();
   /** Whether the panel is pulsing for a just processed Round; cleared when the pulse ends */
   isPulsing = false;
 
   @ViewChild('heading') private heading?: ElementRef<HTMLElement>;
   private readonly injector = inject(Injector);
+  private readonly document = inject(DOCUMENT);
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['justProcessedRound'] && this.justProcessedRound !== null) {
-      this.isPulsing = true;
+      // Under reduced motion the stylesheet plays no animation, so no animationend would clear the flag
+      this.isPulsing = !this.document.defaultView?.matchMedia('(prefers-reduced-motion: reduce)').matches;
       // The heading exists once the Round is rendered, so focus follows the render
       afterNextRender(() => this.heading?.nativeElement.focus(), { injector: this.injector });
     }
   }
-  /** Emitted with the Battle's id when its row is clicked, so the page can open it */
-  @Output() battleSelected = new EventEmitter<number>();
 
   /**
    * The row's accessible name, the whole result in one go: "Battle 33, Alakazam vs Slowbro, Alakazam wins"

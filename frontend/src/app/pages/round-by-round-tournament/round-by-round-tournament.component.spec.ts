@@ -186,7 +186,7 @@ describe('RoundByRoundTournamentComponent', () => {
     ], 1));
     const page = harness.routeNativeElement!;
     expect(movements(page)).toEqual(Array.from({ length: 16 }, () => '–'));
-    expect(movementTexts(page)[0]).toBe('no change');
+    expect(movementTexts(page)[0]).toBe('no Round processed yet');
 
     page.querySelector<HTMLButtonElement>('button.process-round')!.click();
     httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush({
@@ -223,7 +223,8 @@ describe('RoundByRoundTournamentComponent', () => {
     const harness = await openTournamentPage({ ...tournament, roundsPlayed: 2 });
     const page = harness.routeNativeElement!;
     expect(announcement(page)).toBe('');
-    expect(document.activeElement).not.toBe(roundHeading(page));
+    expect(roundHeading(page)).not.toBeNull();
+    expect(document.activeElement).toBe(document.body);
 
     page.querySelector<HTMLButtonElement>('button.process-round')!.click();
     httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(3));
@@ -282,7 +283,8 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(page.querySelector('.complete-line')?.textContent?.replace(/\s+/g, ' ').trim())
       .toBe('Complete · Pokemon1 and Pokemon3 lead the Standings 14–0–1');
     expect(announcement(page)).toBe('');
-    expect(document.activeElement).not.toBe(roundHeading(page));
+    expect(roundHeading(page)).not.toBeNull();
+    expect(document.activeElement).toBe(document.body);
   });
 
   /**
@@ -733,12 +735,44 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(shiftTab.defaultPrevented).toBeTrue();
     expect(document.activeElement).toBe(closeButton);
 
+    // Clicking non-focusable content gives the dialog's root the focus; Tab from there must stay inside too
+    dialog.focus();
+    expect(document.activeElement).toBe(dialog);
+    const shiftTabFromRoot = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    dialog.dispatchEvent(shiftTabFromRoot);
+    expect(shiftTabFromRoot.defaultPrevented).toBeTrue();
+    expect(document.activeElement).toBe(closeButton);
+
     dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
     harness.detectChanges();
 
     expect(page.querySelector('app-battle-modal')).toBeNull();
     expect(getComputedStyle(document.body).overflow).not.toBe('hidden');
     expect(document.activeElement).toBe(row);
+  });
+
+  /**
+   * Verifies that a click on the backdrop closes the Battle modal, but not a click that only ends on the backdrop
+   * because a text selection started inside the modal.
+   */
+  it('should close the Battle modal on a backdrop click, but not when a selection ends on the backdrop', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+    page.querySelector<HTMLElement>('.battle-row')!.click();
+    harness.detectChanges();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/battles/17` }).flush(createRound(3).battles[0]);
+    harness.detectChanges();
+    const dialog = page.querySelector<HTMLElement>('app-battle-modal [role="dialog"]')!;
+
+    dialog.querySelector<HTMLElement>('.modal-title')!.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    dialog.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    harness.detectChanges();
+    expect(page.querySelector('app-battle-modal')).not.toBeNull();
+
+    dialog.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    dialog.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    harness.detectChanges();
+    expect(page.querySelector('app-battle-modal')).toBeNull();
   });
 
   /**
