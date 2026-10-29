@@ -1,6 +1,6 @@
 # Spec: Round-by-round legibility
 
-Status: ready-for-agent
+Status: done
 
 ## Problem Statement
 
