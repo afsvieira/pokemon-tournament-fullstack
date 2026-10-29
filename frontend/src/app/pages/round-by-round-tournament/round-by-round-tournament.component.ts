@@ -47,6 +47,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
   isTournamentGone = false;
   currentSortBy: SortBy = SortBy.wins;
   currentSortDirection: SortDirection = SortDirection.desc;
+  /** What the polite live region says: "Round N processed" after Process Round, nothing otherwise */
+  announcement = '';
+  /** The Round just played by Process Round, which the Round panel focuses and pulses; null otherwise */
+  justProcessedRound: number | null = null;
 
   private tournamentId = '';
   /** The Standings before the last Round processed on this page, for the Movement; null until one is */
@@ -91,6 +95,20 @@ export class RoundByRoundTournamentComponent implements OnInit {
    */
   get isComplete(): boolean {
     return this.tournament?.roundsPlayed === this.roundCount;
+  }
+
+  /**
+   * The closing line of a Complete Tournament: "Complete · Alakazam leads the Standings 14–0–1",
+   * naming every Pokémon on Position 1 in default order; empty while the Tournament is in play
+   */
+  get completeLine(): string {
+    if (!this.isComplete) {
+      return '';
+    }
+    const leaders = positionStandings(this.tournament!.standings, null).filter((entry) => entry.position === 1);
+    const verb = leaders.length > 1 ? 'lead' : 'leads';
+    const { wins, losses, ties } = leaders[0];
+    return `Complete · ${this.joinNames(leaders.map((leader) => leader.name))} ${verb} the Standings ${wins}–${losses}–${ties}`;
   }
 
   /**
@@ -146,8 +164,11 @@ export class RoundByRoundTournamentComponent implements OnInit {
     this.roundRequest?.unsubscribe();
     this.processRequest?.unsubscribe();
     this.isProcessing = false;
-    // A loaded Tournament has no Round this page witnessed, so the Standings show no Movement
+    // A loaded Tournament has no Round this page witnessed, so the Standings show no Movement,
+    // nothing is announced and the Round panel is left alone
     this.previousStandings = null;
+    this.announcement = '';
+    this.justProcessedRound = null;
 
     this.loadRequest = this.roundByRoundService.getTournament(this.tournamentId).pipe(
       switchMap((tournament) => tournament.roundsPlayed === 0
@@ -179,6 +200,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
    */
   processRound(): void {
     this.isProcessing = true;
+    this.announcement = '';
 
     this.processRequest = this.roundByRoundService.processRound(this.tournamentId)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -186,6 +208,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
         next: (processedRound) => {
           this.roundRequest?.unsubscribe();
           this.showRound({ roundNumber: processedRound.roundNumber, battles: processedRound.battles });
+          this.announcement = `Round ${processedRound.roundNumber} processed`;
+          this.justProcessedRound = processedRound.roundNumber;
           this.previousStandings = this.tournament!.standings;
           this.tournament = {
             ...this.tournament!,
@@ -216,6 +240,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
    */
   selectRound(roundNumber: number): void {
     this.roundRequest?.unsubscribe();
+    this.announcement = '';
     const playedRound = this.playedRounds.get(roundNumber);
     if (playedRound) {
       this.showRound(playedRound);
@@ -278,6 +303,13 @@ export class RoundByRoundTournamentComponent implements OnInit {
     }
     this.showTournamentGone();
     return true;
+  }
+
+  /**
+   * "Alakazam", "Alakazam and Primeape", "Alakazam, Mew and Primeape"
+   */
+  private joinNames(names: string[]): string {
+    return names.length > 1 ? `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}` : names[0];
   }
 
   private showRound(round: Round | null): void {

@@ -1,7 +1,10 @@
 <!-- Round panel - the Round's 8 Battles: who fought whom and who won, marked on the winner's name -->
-<div class="card border-secondary mb-4 round-panel">
+<div class="card border-secondary mb-4 round-panel" [class.just-processed]="isPulsing" (animationend)="isPulsing = false">
   @if (round) {
-    <div class="card-header bg-transparent border-secondary fw-semibold">Round {{ round.roundNumber }}</div>
+    <!-- The heading takes focus when Process Round lands a Round, so the result is heard and read on from here -->
+    <h2 #heading class="card-header bg-transparent border-secondary fw-semibold h6 mb-0 round-heading" tabindex="-1">
+      Round {{ round.roundNumber }}
+    </h2>
     <div class="list-group list-group-flush">
       @for (battle of round.battles; track battle.id) {
         <!-- Clicking a row opens the Battle in a modal; the four cells are laid out by the grid in the stylesheet -->

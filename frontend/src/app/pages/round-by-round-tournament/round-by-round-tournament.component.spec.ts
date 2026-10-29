@@ -216,6 +216,76 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
+   * Verifies that after Process Round the page announces "Round N processed" in its polite live region and moves
+   * focus to the new Round's heading, and that neither happens on load or when a chip shows an earlier Round.
+   */
+  it('should announce the processed Round and focus its heading, but not on load or on a chip', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 2 });
+    const page = harness.routeNativeElement!;
+    expect(announcement(page)).toBe('');
+    expect(document.activeElement).not.toBe(roundHeading(page));
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(3));
+    harness.detectChanges();
+
+    expect(announcement(page)).toBe('Round 3 processed');
+    expect(roundHeading(page).textContent).toContain('Round 3');
+    expect(document.activeElement).toBe(roundHeading(page));
+
+    page.querySelectorAll<HTMLButtonElement>('button.round-chip')[0].click();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/rounds/1` }).flush(createRound(1));
+    harness.detectChanges();
+
+    expect(roundHeading(page).textContent).toContain('Round 1');
+    expect(announcement(page)).toBe('');
+  });
+
+  /**
+   * Verifies that once Round 15 makes the Tournament Complete, one line names the single leader of the Standings
+   * with their record, and that no such line shows while the Tournament is in play.
+   */
+  it('should name the leader of the Standings with their record once the Tournament is Complete', async () => {
+    const harness = await openTournamentPage(createTournamentWithRecords([
+      { wins: 13, losses: 1, ties: 0 },
+      { wins: 13, losses: 0, ties: 1 }
+    ], 14));
+    const page = harness.routeNativeElement!;
+    expect(page.querySelector('.complete-line')).toBeNull();
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush({
+      ...createProcessedRound(15),
+      standings: createTournamentWithRecords([
+        { wins: 13, losses: 2, ties: 0 },
+        { wins: 14, losses: 0, ties: 1 }
+      ]).standings
+    });
+    harness.detectChanges();
+
+    expect(page.querySelector('.complete-line')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('Complete · Pokemon2 leads the Standings 14–0–1');
+  });
+
+  /**
+   * Verifies that a Complete Tournament reopened from the Tournament History shows the Complete line, naming every
+   * Pokémon on Position 1 in default order, without announcing a Round or moving focus.
+   */
+  it('should name every Pokémon sharing the lead when a Complete Tournament is reopened', async () => {
+    const harness = await openTournamentPage(createTournamentWithRecords([
+      { wins: 14, losses: 0, ties: 1 },
+      { wins: 13, losses: 1, ties: 1 },
+      { wins: 14, losses: 0, ties: 1 }
+    ], 15));
+    const page = harness.routeNativeElement!;
+
+    expect(page.querySelector('.complete-line')?.textContent?.replace(/\s+/g, ' ').trim())
+      .toBe('Complete · Pokemon1 and Pokemon3 lead the Standings 14–0–1');
+    expect(announcement(page)).toBe('');
+    expect(document.activeElement).not.toBe(roundHeading(page));
+  });
+
+  /**
    * Verifies that a Tournament still in play highlights no row, and that once Round 15 makes it Complete
    * every row on Position 1 is highlighted with a trophy, and only those.
    */
@@ -781,6 +851,15 @@ describe('RoundByRoundTournamentComponent', () => {
   /** What assistive technology reads in the Movement column, row by row */
   function movementTexts(page: HTMLElement): string[] {
     return standingsRows(page).map((row) => row.querySelector('.movement .visually-hidden')?.textContent?.trim() ?? '');
+  }
+
+  /** The polite live region's text */
+  function announcement(page: HTMLElement): string {
+    return page.querySelector('[aria-live="polite"]')?.textContent?.trim() ?? '';
+  }
+
+  function roundHeading(page: HTMLElement): HTMLElement {
+    return page.querySelector<HTMLElement>('app-round-panel .round-heading')!;
   }
 
   function leaderNames(page: HTMLElement): string[] {

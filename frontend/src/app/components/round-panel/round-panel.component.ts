@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Injector, Input, OnChanges, Output, SimpleChanges, ViewChild, afterNextRender, inject } from '@angular/core';
 import { NgClass, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import { Round } from '../../models/round.model';
 import { Battle } from '../../models/battle.model';
@@ -13,9 +13,24 @@ import { getBattleResultLabel, isBattleTie, isBattleWinner } from '../../shared/
   templateUrl: './round-panel.component.html',
   styleUrl: './round-panel.component.scss'
 })
-export class RoundPanelComponent {
+export class RoundPanelComponent implements OnChanges {
   /** The Round to show; null before Round 1 */
   @Input() round: Round | null = null;
+  /** The Round just played by Process Round: its heading takes focus and the panel pulses once; null otherwise */
+  @Input() justProcessedRound: number | null = null;
+  /** Whether the panel is pulsing for a just processed Round; cleared when the pulse ends */
+  isPulsing = false;
+
+  @ViewChild('heading') private heading?: ElementRef<HTMLElement>;
+  private readonly injector = inject(Injector);
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['justProcessedRound'] && this.justProcessedRound !== null) {
+      this.isPulsing = true;
+      // The heading exists once the Round is rendered, so focus follows the render
+      afterNextRender(() => this.heading?.nativeElement.focus(), { injector: this.injector });
+    }
+  }
   /** Emitted with the Battle's id when its row is clicked, so the page can open it */
   @Output() battleSelected = new EventEmitter<number>();
 

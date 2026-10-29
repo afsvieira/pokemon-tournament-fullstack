@@ -4,6 +4,22 @@
   border-radius: 16px;
   background: transparent;
   overflow: hidden;
+
+  // One pulse of the border when Process Round lands a Round, to draw the eye to where the change happened
+  &.just-processed {
+    animation: round-processed 1.2s ease-out 1;
+  }
+}
+
+@keyframes round-processed {
+  0% { border-color: var(--bs-success); box-shadow: 0 0 0 0.5rem rgba(var(--bs-success-rgb), 0.35); }
+  100% { border-color: var(--bs-secondary); box-shadow: 0 0 0 0 rgba(var(--bs-success-rgb), 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .round-panel.just-processed {
+    animation: none;
+  }
 }
 
 // Four cells: Battle number, first fighter, centre marker, second fighter
