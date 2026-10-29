@@ -40,14 +40,16 @@ export class StandingsComponent {
   /** Emitted with the new sort when a header is clicked; the page sorts locally */
   @Output() sortChange = new EventEmitter<SortOptions>();
 
-  /** The columns after Position, in order; Win rate is the assessment's measure of who leads and isn't a sort field
-   * (wins order the same way, every Pokémon having fought once per Round); Movement and the id hide below the small breakpoint */
+  /** The columns after Position, in order. Win rate is the assessment's measure of who leads and isn't a sort field
+   * (wins order the same way, every Pokémon having fought once per Round); XP is the Battles' tiebreak;
+   * XP, Movement and the id hide below the small breakpoint */
   readonly columns: StandingsColumn[] = [
     { field: SortBy.name, label: 'Pokémon', cellClass: '' },
     { label: 'Win rate', cellClass: 'win-rate text-end' },
     { field: SortBy.wins, label: 'W', name: 'Wins', cellClass: 'record text-center' },
     { field: SortBy.losses, label: 'L', name: 'Losses', cellClass: 'record text-center' },
     { field: SortBy.ties, label: 'T', name: 'Ties', cellClass: 'record text-center' },
+    { label: 'XP', name: 'Base experience', cellClass: 'base-xp d-none d-sm-table-cell text-end' },
     { label: 'Movement', cellClass: 'movement d-none d-sm-table-cell text-center' },
     { field: SortBy.id, label: 'ID', cellClass: 'd-none d-sm-table-cell text-end' }
   ];

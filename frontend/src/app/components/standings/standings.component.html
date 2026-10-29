@@ -23,7 +23,14 @@
               </button>
             </th>
           } @else {
-            <th scope="col" [class]="column.cellClass">{{ column.label }}</th>
+            <th scope="col" [class]="column.cellClass">
+              @if (column.name) {
+                <span aria-hidden="true">{{ column.label }}</span>
+                <span class="visually-hidden">{{ column.name }}</span>
+              } @else {
+                {{ column.label }}
+              }
+            </th>
           }
         }
       </tr>
@@ -34,18 +41,18 @@
           <td class="position">{{ entry.position }}</td>
           <td>
             <span class="pokemon-cell d-flex align-items-center">
-              <!-- The sprite where a club crest would be -->
+              <!-- A leader's trophy stands in front of the sprite, where a club crest would be -->
+              @if (isLeader(entry)) {
+                <i class="fas fa-trophy trophy" aria-hidden="true"></i>
+              }
               @if (entry.imageUrl) {
-                <img [src]="entry.imageUrl" alt="" width="32" height="32" class="sprite" loading="lazy">
+                <img [src]="entry.imageUrl" alt="" width="48" height="48" class="sprite" loading="lazy">
               } @else {
                 <span class="sprite text-center" aria-hidden="true">🎴</span>
               }
               <span class="pokemon-name fw-semibold text-truncate" [class.text-success-emphasis]="isLeader(entry)">
                 {{ entry.name }}
               </span>
-              @if (isLeader(entry)) {
-                <i class="fas fa-trophy trophy" aria-hidden="true"></i>
-              }
               <i [ngClass]="getTypeIcon(entry.type)" aria-hidden="true"></i>
               <span class="visually-hidden">{{ entry.type | titlecase }}</span>
             </span>
@@ -54,6 +61,7 @@
           <td class="wins text-center fw-semibold">{{ entry.wins }}</td>
           <td class="losses text-center">{{ entry.losses }}</td>
           <td class="ties text-center">{{ entry.ties }}</td>
+          <td class="base-xp d-none d-sm-table-cell text-end">{{ entry.baseExperience }}</td>
           @let movement = getMovement(entry);
           <td class="movement d-none d-sm-table-cell text-center" [ngClass]="movement.cellClass">
             <span aria-hidden="true">{{ movement.symbol }}</span>
