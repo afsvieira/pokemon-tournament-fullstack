@@ -246,6 +246,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **Error Handling**: User-friendly error messages with toast notifications
 - **Loading States**: Visual feedback during API calls
+- **Modals as dialogs**: The Battle, Battle History and Tournament Rules modals move focus in, keep Tab inside, close on Escape, lock the page behind and return focus to the control that opened them; assistive technology hears a dialog named by its title
 
 ### Backend Features
 - **Tournament Simulation**: Complete round-robin tournament (120 battles total)
@@ -305,11 +306,11 @@ npx ng test --watch=false --browsers=ChromeHeadless
 **Test Coverage:**
 - UI components: pokemon card (6), sort controls (5), battle history modal (2), rules modal (1)
 - App shell, navigation and theme toggle (5 tests)
-- Tournament page, including the rate-limit error message (3 tests)
+- Tournament page, including the rate-limit error message and the Battle History and Tournament Rules modals as dialogs (5 tests)
 - Tournament History page, through the app routes: the list and Open, the empty state, load error and Retry, Start and its error toast (5 tests)
-- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, Process Round with its errors, the winner marking in the Battle rows, the Standings with Position, Movement, header sorting and the Complete highlight, the Round chips, the Battle modal and a change of Tournament while loading (26 tests)
+- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, Process Round with its errors, the winner marking in the Battle rows, the Standings with Position, Movement, header sorting and the Complete highlight, the Round chips, the Battle modal and its dialog behaviour, and a change of Tournament while loading (27 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 55 tests**
+- **Total: 58 tests**
 
 ## 🛠️ Development
 

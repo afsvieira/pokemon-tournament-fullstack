@@ -8,11 +8,12 @@ import { getTypeIconClass } from '../../models/icons.mapping';
 import { RoundByRoundService } from '../../services/round-by-round.service';
 import { getBattleResultLabel, isBattleWinner } from '../../shared/battle-result';
 import { getErrorMessage } from '../../shared/error-message';
+import { DialogDirective } from '../../shared/dialog.directive';
 
 @Component({
   selector: 'app-battle-modal',
   standalone: true,
-  imports: [NgClass, NgTemplateOutlet, TitleCasePipe],
+  imports: [NgClass, NgTemplateOutlet, TitleCasePipe, DialogDirective],
   templateUrl: './battle-modal.component.html',
   styleUrl: './battle-modal.component.scss'
 })

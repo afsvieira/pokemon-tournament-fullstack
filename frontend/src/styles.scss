@@ -66,6 +66,11 @@ body[data-bs-theme="light"] {
 .fa-wand-sparkles { color: #ee99ac; }
 .fa-question { color: #68a090; }
 
+// While a dialog is open the page behind doesn't scroll (Bootstrap sets this from its own JS, which the app doesn't use)
+body.modal-open {
+  overflow: hidden;
+}
+
 // Bootstrap modal customization for dark theme
 .modal-content {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);

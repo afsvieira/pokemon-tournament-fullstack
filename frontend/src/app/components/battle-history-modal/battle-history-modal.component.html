@@ -1,6 +1,6 @@
 <!-- Battle History Modal - displays Pokemon battle records and statistics -->
-<div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (click)="handleCloseModal()">
-  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+<div appDialog class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (dialogClose)="handleCloseModal()">
+  <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content border-secondary" style="border-radius: 16px; max-height: 80vh">
       <!-- Modal header with Pokemon name and close button -->
       <div class="modal-header border-secondary">

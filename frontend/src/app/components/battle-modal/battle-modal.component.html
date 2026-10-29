@@ -1,6 +1,6 @@
 <!-- Battle Modal - one Battle of a Tournament: both Pokémon and the result -->
-<div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (click)="handleCloseModal()">
-  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+<div appDialog class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (dialogClose)="handleCloseModal()">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-secondary" style="border-radius: 16px">
       <!-- Modal header with the Battle's number and close button -->
       <div class="modal-header border-secondary">

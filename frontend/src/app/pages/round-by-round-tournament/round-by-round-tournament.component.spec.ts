@@ -591,6 +591,47 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
+   * Verifies that the Battle modal behaves as a dialog: assistive technology hears a dialog named by its title,
+   * the close button has focus on open, the page behind doesn't scroll, Tab and Shift+Tab stay inside (the close
+   * button is its only focusable element, so the dialog keeps them from leaving it), Escape closes it,
+   * and focus returns to the row.
+   */
+  it('should open the Battle modal as a dialog that traps focus, closes on Escape and returns focus to the row', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
+    const page = harness.routeNativeElement!;
+    const row = page.querySelector<HTMLElement>('.battle-row')!;
+
+    row.focus();
+    row.click();
+    harness.detectChanges();
+    httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/battles/17` }).flush(createRound(3).battles[0]);
+    harness.detectChanges();
+
+    const dialog = page.querySelector<HTMLElement>('app-battle-modal [role="dialog"]')!;
+    const closeButton = dialog.querySelector<HTMLButtonElement>('button.btn-close')!;
+    expect(dialog.getAttribute('aria-modal')).toBe('true');
+    expect(document.getElementById(dialog.getAttribute('aria-labelledby')!)?.textContent).toContain('Battle 17');
+    expect(document.activeElement).toBe(closeButton);
+    expect(getComputedStyle(document.body).overflow).toBe('hidden');
+
+    const tab = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true, cancelable: true });
+    closeButton.dispatchEvent(tab);
+    expect(tab.defaultPrevented).toBeTrue();
+    expect(document.activeElement).toBe(closeButton);
+    const shiftTab = new KeyboardEvent('keydown', { key: 'Tab', shiftKey: true, bubbles: true, cancelable: true });
+    closeButton.dispatchEvent(shiftTab);
+    expect(shiftTab.defaultPrevented).toBeTrue();
+    expect(document.activeElement).toBe(closeButton);
+
+    dialog.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    harness.detectChanges();
+
+    expect(page.querySelector('app-battle-modal')).toBeNull();
+    expect(getComputedStyle(document.body).overflow).not.toBe('hidden');
+    expect(document.activeElement).toBe(row);
+  });
+
+  /**
    * Verifies that the modal of a tied Battle shows "Tie" instead of a winner, and marks neither Pokémon.
    */
   it('should show Tie and mark neither Pokémon in the Battle modal when the Battle is a tie', async () => {
@@ -636,21 +677,25 @@ describe('RoundByRoundTournamentComponent', () => {
 
   /**
    * Verifies that a 404 on the Battle, as after an API restart, closes the modal and shows that the Tournament
-   * no longer exists.
+   * no longer exists; the row that opened the modal is gone with the page, so focus falls back to the new heading.
    */
   it('should show that the Tournament no longer exists when the Battle answers 404', async () => {
     const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
     const page = harness.routeNativeElement!;
+    const row = page.querySelector<HTMLElement>('.battle-row')!;
 
-    page.querySelector<HTMLElement>('.battle-row')!.click();
+    row.focus();
+    row.click();
     harness.detectChanges();
     httpMock
       .expectOne({ method: 'GET', url: `${tournamentUrl}/battles/17` })
       .flush({ error: 'Tournament not found.' }, { status: 404, statusText: 'Not Found' });
     harness.detectChanges();
+    await harness.fixture.whenStable();
 
     expect(page.textContent).toContain('This Tournament no longer exists.');
     expect(page.querySelector('app-battle-modal')).toBeNull();
+    expect(document.activeElement?.textContent).toContain('This Tournament no longer exists.');
   });
 
   /**

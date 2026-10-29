@@ -1,7 +1,7 @@
 <!-- Tournament Rules Modal - displays game mechanics and battle rules -->
 @if (isVisible) {
-<div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (click)="close()">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable" (click)="$event.stopPropagation()">
+<div appDialog class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (dialogClose)="close()">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
     <div class="modal-content border-secondary" style="border-radius: 16px">
       <!-- Modal header with title and close button -->
       <div class="modal-header border-secondary">
@@ -9,7 +9,7 @@
           <i class="fas fa-scroll fs-3 me-2 text-info"></i>
           Tournament Rules
         </h2>
-        <button class="btn-close" (click)="close()" aria-label="Close"></button>
+        <button type="button" class="btn-close" (click)="close()" aria-label="Close"></button>
       </div>
 
       <!-- Modal content sections -->
@@ -121,7 +121,7 @@
 
       <!-- Modal footer with close button -->
       <div class="modal-footer border-secondary justify-content-center">
-        <button class="btn btn-primary" (click)="close()">
+        <button type="button" class="btn btn-primary" (click)="close()">
           <i class="fas fa-check me-2"></i>
           Got it!
         </button>
