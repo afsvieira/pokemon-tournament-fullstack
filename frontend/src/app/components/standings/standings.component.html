@@ -30,10 +30,10 @@
     </thead>
     <tbody>
       @for (entry of entries; track entry.id) {
-        <tr [class.table-success]="isLeader(entry)" [class.leader]="isLeader(entry)">
-          <td class="position text-muted">{{ entry.position }}</td>
+        <tr [class.leader]="isLeader(entry)">
+          <td class="position">{{ entry.position }}</td>
           <td>
-            <span class="d-flex align-items-center gap-2">
+            <span class="pokemon-cell d-flex align-items-center">
               <!-- The sprite where a club crest would be -->
               @if (entry.imageUrl) {
                 <img [src]="entry.imageUrl" alt="" width="32" height="32" class="sprite" loading="lazy">
@@ -58,7 +58,7 @@
             <span aria-hidden="true">{{ movement.symbol }}</span>
             <span class="visually-hidden">{{ movement.text }}</span>
           </td>
-          <td class="pokemon-id d-none d-sm-table-cell text-end text-muted">{{ formatId(entry) }}</td>
+          <td class="pokemon-id d-none d-sm-table-cell text-end">{{ formatId(entry) }}</td>
         </tr>
       }
     </tbody>

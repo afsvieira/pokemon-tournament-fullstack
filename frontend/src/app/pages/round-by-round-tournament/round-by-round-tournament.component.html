@@ -39,7 +39,7 @@
   } @else if (tournament) {
     <!-- Tournament header with Process Round, or the Complete badge after Round 15 -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-      <h1 class="h3 mb-0">Tournament · started {{ tournament.startedAt | date: 'dd/MM HH:mm' }}</h1>
+      <h1 class="h3 mb-0">Tournament · <span class="text-nowrap">started {{ tournament.startedAt | date: 'dd/MM/yyyy HH:mm' }}</span></h1>
       <div class="d-flex flex-wrap align-items-center gap-3">
         <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
         @if (isComplete) {
@@ -72,7 +72,7 @@
 
     <!-- Round chips: played Rounds can be reopened, the ones still to come are disabled -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-      <span class="text-muted me-1">Rounds:</span>
+      <span class="text-muted me-1 rounds-label">Rounds:</span>
       @for (roundNumber of roundNumbers; track roundNumber) {
         <button
           type="button"

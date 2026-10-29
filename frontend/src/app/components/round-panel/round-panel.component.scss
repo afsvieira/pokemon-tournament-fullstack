@@ -39,6 +39,7 @@
 .battle-number {
   min-width: 5.5rem;
   font-family: 'Courier New', monospace;
+  font-variant-numeric: tabular-nums;
 }
 
 // Below the small breakpoint the Battle number takes its own line and the fighters sit either side of the marker

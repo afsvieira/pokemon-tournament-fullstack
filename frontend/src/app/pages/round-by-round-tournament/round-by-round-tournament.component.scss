@@ -5,6 +5,20 @@
   @include primary-button;
 }
 
+// A chip is a touch target too: never narrower or shorter than 2.25rem
+.round-chip {
+  min-width: 2.25rem;
+  min-height: 2.25rem;
+  font-variant-numeric: tabular-nums;
+}
+
+// On a phone the label takes its own line, so the 15 chips fit in two rows instead of three
+@media (max-width: 575.98px) {
+  .rounds-label {
+    flex-basis: 100%;
+  }
+}
+
 // Rounds still to come are dashed as well as disabled, so played chips read as distinct from future ones
 .round-chip:disabled {
   border-style: dashed;

@@ -1,5 +1,19 @@
 @use './shared/buttons' as *;
 
+// Theme toggle: pinned on wide screens; on a phone it scrolls with the page rather than covering the content
+.theme-toggle {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+@media (max-width: 575.98px) {
+  .theme-toggle {
+    position: absolute;
+  }
+}
+
 // Theme toggle button styles; not "all", so the focus ring shows at once
 .btn {
   transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
