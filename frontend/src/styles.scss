@@ -26,23 +26,88 @@ body[data-bs-theme="light"] {
   padding-bottom: 2rem;
 }
 
-// Custom scrollbar styling
+// Custom scrollbar styling, following the theme; the tokens sit on the root so the viewport's own scrollbar reads them
+:root {
+  --app-scrollbar-track: rgba(15, 23, 42, 0.5);
+  --app-scrollbar-thumb: rgba(100, 116, 139, 0.5);
+  --app-scrollbar-thumb-hover: rgba(100, 116, 139, 0.7);
+}
+
+:root:has(body[data-bs-theme="light"]) {
+  --app-scrollbar-track: rgba(0, 0, 0, 0.06);
+  --app-scrollbar-thumb: rgba(71, 85, 105, 0.45);
+  --app-scrollbar-thumb-hover: rgba(71, 85, 105, 0.65);
+}
+
 *::-webkit-scrollbar {
   width: 10px;
 }
 
 *::-webkit-scrollbar-track {
-  background: rgba(15, 23, 42, 0.5);
+  background: var(--app-scrollbar-track);
   border-radius: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background: rgba(100, 116, 139, 0.5);
+  background: var(--app-scrollbar-thumb);
   border-radius: 8px;
-  
+
   &:hover {
-    background: rgba(100, 116, 139, 0.7);
+    background: var(--app-scrollbar-thumb-hover);
   }
+}
+
+// Outlined secondary buttons (Round chips, sort direction, theme toggle) in a colour that passes on both body gradients
+body[data-bs-theme="dark"] {
+  --app-outline: #adb5bd;
+  --app-outline-contrast: #0f172a;
+}
+
+body[data-bs-theme="light"] {
+  --app-outline: #495057;
+  --app-outline-contrast: #ffffff;
+}
+
+.btn-outline-secondary {
+  --bs-btn-color: var(--app-outline);
+  --bs-btn-border-color: var(--app-outline);
+  --bs-btn-hover-color: var(--app-outline-contrast);
+  --bs-btn-hover-bg: var(--app-outline);
+  --bs-btn-hover-border-color: var(--app-outline);
+  --bs-btn-active-color: var(--app-outline-contrast);
+  --bs-btn-active-bg: var(--app-outline);
+  --bs-btn-active-border-color: var(--app-outline);
+  --bs-btn-disabled-color: var(--app-outline);
+  --bs-btn-disabled-border-color: var(--app-outline);
+}
+
+// Every focused control shows the same ring, visible on both themes; the primary buttons' resting glow is not it
+body[data-bs-theme="dark"] {
+  --app-focus-ring: #93c5fd;
+}
+
+body[data-bs-theme="light"] {
+  --app-focus-ring: #1d4ed8;
+}
+
+.btn:focus-visible,
+.btn-close:focus-visible,
+.nav-link:focus-visible,
+.form-select:focus-visible,
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--app-focus-ring);
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+// The stat values on the Instant Simulation cards use the emphasis tokens, which pass on both themes
+.stat-card {
+  .text-success { color: var(--bs-success-text-emphasis) !important; }
+  .text-danger { color: var(--bs-danger-text-emphasis) !important; }
+  .text-warning { color: var(--bs-warning-text-emphasis) !important; }
+  .text-secondary { color: var(--bs-secondary-text-emphasis) !important; }
 }
 
 // Pokemon type colors for icons

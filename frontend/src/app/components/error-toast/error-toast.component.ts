@@ -8,6 +8,8 @@ import { Component, EventEmitter, Input, OnChanges, OnDestroy, Output } from '@a
 export class ErrorToastComponent implements OnChanges, OnDestroy {
   /** The message to show; the toast is hidden while it is empty */
   @Input() message = '';
+  /** Whether the toast stays until dismissed instead of hiding itself, as after a 429 */
+  @Input() persistent = false;
   /** Emitted when the toast is closed or hides itself, so the parent can clear the message */
   @Output() dismissed = new EventEmitter<void>();
 
@@ -17,7 +19,7 @@ export class ErrorToastComponent implements OnChanges, OnDestroy {
   ngOnChanges(): void {
     clearTimeout(this.hideTimer);
 
-    if (this.message) {
+    if (this.message && !this.persistent) {
       this.hideTimer = setTimeout(() => this.dismissed.emit(), this.autoHideMs);
     }
   }

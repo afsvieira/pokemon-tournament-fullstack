@@ -492,6 +492,46 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
+   * Verifies that a 429 from Process Round keeps its toast until it is dismissed, past the usual auto-hide delay,
+   * and disables Process Round for the rate limit's window with the remaining seconds in its label,
+   * re-enabling it once the window is over.
+   */
+  it('should keep the 429 toast until dismissed and make Process Round wait out the rate-limit window', async () => {
+    const harness = await openTournamentPage(tournament);
+    const page = harness.routeNativeElement!;
+    jasmine.clock().install();
+    try {
+      page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+      httpMock
+        .expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` })
+        .flush(null, { status: 429, statusText: 'Too Many Requests' });
+      harness.detectChanges();
+
+      const processButton = page.querySelector<HTMLButtonElement>('button.process-round')!;
+      expect(page.querySelector('.toast-body')?.textContent).toContain('Too many requests. Please wait a minute and try again.');
+      expect(processButton.disabled).toBeTrue();
+      expect(processButton.textContent?.replace(/\s+/g, ' ').trim()).toBe('Try again in 60 s');
+
+      jasmine.clock().tick(18000);
+      harness.detectChanges();
+      expect(page.querySelector('.toast-body')).not.toBeNull();
+      expect(processButton.textContent?.replace(/\s+/g, ' ').trim()).toBe('Try again in 42 s');
+
+      page.querySelector<HTMLButtonElement>('.toast .btn-close')!.click();
+      harness.detectChanges();
+      expect(page.querySelector('.toast-body')).toBeNull();
+      expect(processButton.disabled).toBeTrue();
+
+      jasmine.clock().tick(42000);
+      harness.detectChanges();
+      expect(processButton.disabled).toBeFalse();
+      expect(processButton.textContent).toContain('Process Round');
+    } finally {
+      jasmine.clock().uninstall();
+    }
+  });
+
+  /**
    * Verifies that a 409 from Process Round, as in a stale tab whose Tournament another tab completed,
    * reloads the Tournament and its last Round, then shows the API's message in a toast.
    */

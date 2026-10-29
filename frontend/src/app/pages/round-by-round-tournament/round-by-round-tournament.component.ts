@@ -16,6 +16,7 @@ import { RoundPanelComponent } from '../../components/round-panel/round-panel.co
 import { ErrorToastComponent } from '../../components/error-toast/error-toast.component';
 import { BattleModalComponent } from '../../components/battle-modal/battle-modal.component';
 import { getErrorMessage } from '../../shared/error-message';
+import { RATE_LIMIT_WINDOW_SECONDS } from '../../shared/rate-limit';
 import { compareByDefaultOrder, positionStandings } from '../../shared/standings';
 
 @Component({
@@ -43,6 +44,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
   isLoading = false;
   isProcessing = false;
   toastMessage = '';
+  /** Whether the toast stays until dismissed: after a 429, so the user isn't invited to hit the same wall */
+  isToastPersistent = false;
+  /** Seconds left before Process Round can be pressed again after a 429; 0 while it can */
+  retryAfterSeconds = 0;
   loadErrorMessage = '';
   isTournamentGone = false;
   currentSortBy: SortBy = SortBy.wins;
@@ -63,6 +68,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
   private loadRequest?: Subscription;
   /** The Round still being processed; dropped when the page moves to another Tournament */
   private processRequest?: Subscription;
+  /** Counts the rate-limit window down after a 429 */
+  private retryTimer?: ReturnType<typeof setInterval>;
 
   constructor(
     private route: ActivatedRoute,
@@ -71,6 +78,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.destroyRef.onDestroy(() => clearInterval(this.retryTimer));
     // The router reuses this page when only the id changes, so load on every id rather than once;
     // loadTournament drops the previous id's requests, so a slow answer never lands on the new Tournament
     this.route.paramMap
@@ -88,6 +96,20 @@ export class RoundByRoundTournamentComponent implements OnInit {
    */
   get roundProgress(): string {
     return `Round ${this.tournament?.roundsPlayed ?? 0} of ${this.roundCount}`;
+  }
+
+  /**
+   * Whether Process Round can't be pressed: while a Round is being processed or a rate-limit window is waited out
+   */
+  get isProcessRoundDisabled(): boolean {
+    return this.isProcessing || this.retryAfterSeconds > 0;
+  }
+
+  /**
+   * Process Round's label: the remaining wait after a 429, or the action itself
+   */
+  get processRoundLabel(): string {
+    return this.retryAfterSeconds > 0 ? `Try again in ${this.retryAfterSeconds} s` : 'Process Round';
   }
 
   /**
@@ -164,6 +186,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
     this.roundRequest?.unsubscribe();
     this.processRequest?.unsubscribe();
     this.isProcessing = false;
+    // The rate limit is per client, not per Tournament, so a countdown and its toast survive a change of Tournament
     // A loaded Tournament has no Round this page witnessed, so the Standings show no Movement,
     // nothing is announced and the Round panel is left alone
     this.previousStandings = null;
@@ -223,11 +246,10 @@ export class RoundByRoundTournamentComponent implements OnInit {
           if (this.handledAsTournamentGone(error)) {
             return;
           }
-          const message = getErrorMessage(error);
           if (error.status === HttpStatusCode.Conflict) {
-            this.loadTournament(() => this.toastMessage = message);
+            this.loadTournament(() => this.showToast(getErrorMessage(error)));
           } else {
-            this.toastMessage = message;
+            this.showRequestError(error);
           }
         }
       });
@@ -253,7 +275,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
         next: (round) => this.showRound(round),
         error: (error: HttpErrorResponse) => {
           if (!this.handledAsTournamentGone(error)) {
-            this.toastMessage = getErrorMessage(error);
+            this.showRequestError(error);
           }
         }
       });
@@ -279,6 +301,41 @@ export class RoundByRoundTournamentComponent implements OnInit {
    */
   hideToast(): void {
     this.toastMessage = '';
+    this.isToastPersistent = false;
+  }
+
+  /**
+   * Shows a failed request's message in the toast. A 429, from Process Round or a Round chip alike, keeps the toast
+   * until dismissed and makes Process Round wait out the rate-limit window, so the user isn't invited to hit the same wall
+   */
+  private showRequestError(error: HttpErrorResponse): void {
+    const isRateLimited = error.status === HttpStatusCode.TooManyRequests;
+    this.showToast(getErrorMessage(error), isRateLimited);
+    if (isRateLimited) {
+      this.waitOutRateLimit();
+    }
+  }
+
+  /**
+   * Shows the toast, hiding itself after a while unless persistent
+   */
+  private showToast(message: string, persistent = false): void {
+    this.toastMessage = message;
+    this.isToastPersistent = persistent;
+  }
+
+  /**
+   * Disables Process Round for the rate limit's window, counting the seconds down in its label
+   */
+  private waitOutRateLimit(): void {
+    clearInterval(this.retryTimer);
+    this.retryAfterSeconds = RATE_LIMIT_WINDOW_SECONDS;
+    this.retryTimer = setInterval(() => {
+      this.retryAfterSeconds--;
+      if (this.retryAfterSeconds <= 0) {
+        clearInterval(this.retryTimer);
+      }
+    }, 1000);
   }
 
   /**
@@ -288,7 +345,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
   showTournamentGone(): void {
     this.isTournamentGone = true;
     this.openBattleId = null;
-    this.toastMessage = '';
+    this.hideToast();
   }
 
   /**

@@ -1,4 +1,4 @@
-<!-- Error Toast Notification - red, top right, hides itself after 5 seconds -->
+<!-- Error Toast Notification - red, top right, hides itself after 5 seconds unless persistent -->
 @if (message) {
   <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 9999">
     <div class="toast show" role="alert">
@@ -7,7 +7,7 @@
         <strong class="me-auto">Error</strong>
         <button type="button" class="btn-close btn-close-white" (click)="dismiss()" aria-label="Close"></button>
       </div>
-      <div class="toast-body bg-dark text-light border border-danger border-top-0">
+      <div class="toast-body bg-body text-body border border-danger border-top-0">
         {{ message }}
       </div>
     </div>

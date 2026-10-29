@@ -48,14 +48,14 @@
           <button
             type="button"
             class="btn btn-primary px-4 process-round"
-            [disabled]="isProcessing"
+            [disabled]="isProcessRoundDisabled"
             (click)="processRound()">
             @if (isProcessing) {
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
               Processing...
             } @else {
-              <i class="fas fa-forward-step me-2"></i>
-              Process Round
+              <i class="fas fa-forward-step me-2" aria-hidden="true"></i>
+              {{ processRoundLabel }}
             }
           </button>
         }
@@ -111,4 +111,4 @@
 }
 
 <!-- Kept outside the page states, so a 409's toast survives the reload it triggers -->
-<app-error-toast [message]="toastMessage" (dismissed)="hideToast()"></app-error-toast>
+<app-error-toast [message]="toastMessage" [persistent]="isToastPersistent" (dismissed)="hideToast()"></app-error-toast>

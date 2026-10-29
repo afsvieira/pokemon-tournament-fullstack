@@ -5,6 +5,11 @@
   @include primary-button;
 }
 
+// Rounds still to come are dashed as well as disabled, so played chips read as distinct from future ones
+.round-chip:disabled {
+  border-style: dashed;
+}
+
 .back-link {
   color: var(--bs-secondary-color);
   text-decoration: none;
