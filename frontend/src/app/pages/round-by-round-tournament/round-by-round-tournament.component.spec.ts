@@ -53,7 +53,7 @@ describe('RoundByRoundTournamentComponent', () => {
   /**
    * Verifies that the Standings list one row per Pokémon in Position order (most wins, then fewest losses, then name),
    * that equal records share a Position and the next one skips (1, 1, 3), that the row shows the sprite, type,
-   * W, L, T and id, and that neither the win rate nor the Instant Simulation's sort controls are on the page.
+   * the win rate with one decimal, W, L, T and id, and that the Instant Simulation's sort controls are not on the page.
    */
   it('should list the Standings in Position order, sharing a Position for equal records', async () => {
     const harness = await openTournamentPage(createTournamentWithRecords([
@@ -78,12 +78,14 @@ describe('RoundByRoundTournamentComponent', () => {
     const leader = standingsRows(page)[0];
     expect(leader.querySelector('img')?.getAttribute('src')).toBe('https://img.example/3.png');
     expect(leader.querySelector('.visually-hidden')?.textContent?.trim()).toBe('Normal');
+    expect(leader.querySelector('.win-rate')?.textContent?.trim()).toBe('100.0%');
     expect(leader.querySelector('.wins')?.textContent?.trim()).toBe('5');
     expect(leader.querySelector('.losses')?.textContent?.trim()).toBe('0');
     expect(leader.querySelector('.ties')?.textContent?.trim()).toBe('0');
     expect(leader.querySelector('.pokemon-id')?.textContent?.trim()).toBe('#003');
+    expect(standingsRows(page)[2].querySelector('.win-rate')?.textContent?.trim()).toBe('83.3%');
+    expect(standingsRows(page)[15].querySelector('.win-rate')?.textContent?.trim()).toBe('0.0%');
     expect(page.textContent).toContain('Standings');
-    expect(page.textContent).not.toContain('Win Rate');
     expect(page.querySelector('app-sort-controls')).toBeNull();
     expect(page.querySelector('app-pokemon-card')).toBeNull();
   });

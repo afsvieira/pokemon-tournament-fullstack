@@ -36,6 +36,12 @@ tr.leader > td {
   width: 3rem;
 }
 
+.win-rate {
+  width: 6.5rem;
+  padding-right: 1.25rem;
+  white-space: nowrap;
+}
+
 .movement {
   width: 6.5rem;
   white-space: nowrap;
@@ -86,16 +92,45 @@ tr.leader > td {
   .wins,
   .losses,
   .ties {
-    width: 2.5rem;
+    width: 1.875rem;
   }
 
-  // The name keeps most of the row: a smaller sprite and Position column, tighter gaps
+  // The numbers shrink a step and the win rate's header wraps, so the name keeps most of the row
+  .win-rate,
+  .record,
+  .wins,
+  .losses,
+  .ties {
+    font-size: 0.875rem;
+  }
+
+  .win-rate {
+    width: 3.75rem;
+    padding-right: 0.35rem;
+  }
+
+  // Only the header wraps ("Win" over "rate"); the values stay on one line
+  th.win-rate {
+    white-space: normal;
+  }
+
+  // The sorted record header stacks its direction icon under the letter, so "W" and its icon fit in the column
+  .record .sort-header {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+  }
+
+  // A smaller sprite and Position column, tighter gaps
   .position {
     width: 2rem;
+    font-size: 0.875rem;
+    white-space: nowrap;
   }
 
   .pokemon-cell {
-    gap: 0.3rem;
+    gap: 0.25rem;
   }
 
   .sprite {

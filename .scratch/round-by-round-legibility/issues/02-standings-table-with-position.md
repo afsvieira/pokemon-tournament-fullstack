@@ -18,7 +18,7 @@
 - [x] The default order above replaces the page's current "wins descending" default, so the table is deterministic from the first render.
 - [x] Clicking the W, L, T, Name or ID header sorts by that field; the first click sorts wins, losses and ties descending and name and id ascending, a second click on the same header flips the direction. The sorted header carries `aria-sort`. Sorting stays local, with no new API request.
 - [x] When the Tournament is Complete, every row on Position 1 is highlighted with the theme's success tint and a trophy next to the name.
-- [x] Win rate is not shown on this page.
+- [x] Win rate is not shown on this page. *(Reversed after the design pass of 2026-10-29: the owner asked for a bold win rate column, one decimal, before W, as the assessment's measure of who leads.)*
 - [x] The heading stays "Standings"; no label, title or tooltip says "table", "ranking", "leaderboard" or "league".
 - [x] The table keeps showing the current Standings while an earlier Round is reviewed, and updates after every Process Round, as the cards did.
 

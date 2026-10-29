@@ -81,13 +81,20 @@ body[data-bs-theme="light"] {
   --bs-btn-disabled-border-color: var(--app-outline);
 }
 
-// Every focused control shows the same ring, visible on both themes; the primary buttons' resting glow is not it
+// Every focused control shows the same ring, visible on both themes; the primary buttons' resting glow is not it.
+// The trophy that marks a Battle's winner and the Standings' leaders is gold, a shade per theme
 body[data-bs-theme="dark"] {
   --app-focus-ring: #93c5fd;
+  --app-trophy: #f6c343;
 }
 
 body[data-bs-theme="light"] {
   --app-focus-ring: #1d4ed8;
+  --app-trophy: #b7791f;
+}
+
+.trophy {
+  color: var(--app-trophy);
 }
 
 .btn:focus-visible,

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgClass, TitleCasePipe } from '@angular/common';
+import { DecimalPipe, NgClass, TitleCasePipe } from '@angular/common';
 import { StandingsEntry } from '../../models/standings-entry.model';
 import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
 import { getTypeIconClass } from '../../models/icons.mapping';
@@ -26,7 +26,7 @@ interface MovementView {
 @Component({
   selector: 'app-standings',
   standalone: true,
-  imports: [NgClass, TitleCasePipe],
+  imports: [DecimalPipe, NgClass, TitleCasePipe],
   templateUrl: './standings.component.html',
   styleUrl: './standings.component.scss'
 })
@@ -40,9 +40,11 @@ export class StandingsComponent {
   /** Emitted with the new sort when a header is clicked; the page sorts locally */
   @Output() sortChange = new EventEmitter<SortOptions>();
 
-  /** The columns after Position, in order; Movement and the id are hidden below the small breakpoint */
+  /** The columns after Position, in order; Win rate is the assessment's measure of who leads and isn't a sort field
+   * (wins order the same way, every Pokémon having fought once per Round); Movement and the id hide below the small breakpoint */
   readonly columns: StandingsColumn[] = [
     { field: SortBy.name, label: 'Pokémon', cellClass: '' },
+    { label: 'Win rate', cellClass: 'win-rate text-end' },
     { field: SortBy.wins, label: 'W', name: 'Wins', cellClass: 'record text-center' },
     { field: SortBy.losses, label: 'L', name: 'Losses', cellClass: 'record text-center' },
     { field: SortBy.ties, label: 'T', name: 'Ties', cellClass: 'record text-center' },

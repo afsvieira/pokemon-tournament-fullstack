@@ -27,7 +27,8 @@ export function createStartedTournament(): Tournament {
 }
 
 /**
- * Builds a Tournament whose Standings carry the given records, by Start order; Pokémon past the list stay at 0-0-0.
+ * Builds a Tournament whose Standings carry the given records, by Start order, each with the win rate the API
+ * derives from it (wins as a percentage of Battles fought, two decimals); Pokémon past the list stay at 0-0-0.
  * @param records - Wins, losses and ties for the first Pokémon
  * @param roundsPlayed - How far the Tournament has got; 15 makes it Complete
  */
@@ -39,7 +40,11 @@ export function createTournamentWithRecords(
   return {
     ...tournament,
     roundsPlayed,
-    standings: tournament.standings.map((pokemon, index) => ({ ...pokemon, ...records[index] }))
+    standings: tournament.standings.map((pokemon, index) => {
+      const record = { ...pokemon, ...records[index] };
+      const fought = record.wins + record.losses + record.ties;
+      return { ...record, winRate: fought === 0 ? 0 : Math.round((record.wins / fought) * 10000) / 100 };
+    })
   };
 }
 

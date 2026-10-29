@@ -41,7 +41,7 @@
     <i [ngClass]="getTypeIcon(pokemon.type)" aria-hidden="true"></i>
     <span class="visually-hidden">{{ pokemon.type | titlecase }}</span>
     @if (isWinner(battle, pokemon)) {
-      <i class="fas fa-trophy text-success-emphasis" aria-hidden="true"></i>
+      <i class="fas fa-trophy trophy" aria-hidden="true"></i>
       <span class="fighter-name text-truncate fw-bold text-success-emphasis">{{ pokemon.name }}</span>
     } @else {
       <span class="fighter-name text-truncate text-body-secondary">{{ pokemon.name }}</span>

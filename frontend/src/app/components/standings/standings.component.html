@@ -44,12 +44,13 @@
                 {{ entry.name }}
               </span>
               @if (isLeader(entry)) {
-                <i class="fas fa-trophy text-success-emphasis" aria-hidden="true"></i>
+                <i class="fas fa-trophy trophy" aria-hidden="true"></i>
               }
               <i [ngClass]="getTypeIcon(entry.type)" aria-hidden="true"></i>
               <span class="visually-hidden">{{ entry.type | titlecase }}</span>
             </span>
           </td>
+          <td class="win-rate text-end fw-bold">{{ entry.winRate | number: '1.1-1' }}%</td>
           <td class="wins text-center fw-semibold">{{ entry.wins }}</td>
           <td class="losses text-center">{{ entry.losses }}</td>
           <td class="ties text-center">{{ entry.ties }}</td>
