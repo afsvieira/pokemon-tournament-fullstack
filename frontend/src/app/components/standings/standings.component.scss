@@ -16,11 +16,16 @@
   width: 2.5rem;
 }
 
+.record,
 .wins,
 .losses,
-.ties,
-th.text-center {
+.ties {
   width: 3rem;
+}
+
+.movement {
+  width: 6.5rem;
+  white-space: nowrap;
 }
 
 .pokemon-id {
@@ -60,10 +65,10 @@ th.text-center {
     padding: 0.5rem 0.35rem;
   }
 
+  .record,
   .wins,
   .losses,
-  .ties,
-  th.text-center {
+  .ties {
     width: 2.75rem;
   }
 }

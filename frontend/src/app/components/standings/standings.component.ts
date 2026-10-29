@@ -4,14 +4,22 @@ import { StandingsEntry } from '../../models/standings-entry.model';
 import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
 import { getTypeIconClass } from '../../models/icons.mapping';
 
-/** A sortable column: the sort field it holds, its header and how its cells are laid out */
+/** A column after Position: its header, how its cells are laid out and, when it sorts, its sort field */
 interface StandingsColumn {
-  field: SortBy;
+  /** The field a click on the header sorts by; absent on the Movement column, which doesn't sort */
+  field?: SortBy;
   /** What sighted users read, e.g. "W" */
   label: string;
   /** The full word assistive technology reads instead of an abbreviated label, e.g. "Wins" */
   name?: string;
   /** Bootstrap classes shared by the header and its cells: alignment, and hiding the id below the small breakpoint */
+  cellClass: string;
+}
+
+/** How a row shows its Movement */
+interface MovementView {
+  symbol: string;
+  text: string;
   cellClass: string;
 }
 
@@ -32,12 +40,13 @@ export class StandingsComponent {
   /** Emitted with the new sort when a header is clicked; the page sorts locally */
   @Output() sortChange = new EventEmitter<SortOptions>();
 
-  /** The sortable columns, after the Position column */
+  /** The columns after Position, in order; Movement and the id are hidden below the small breakpoint */
   readonly columns: StandingsColumn[] = [
     { field: SortBy.name, label: 'Pokémon', cellClass: '' },
-    { field: SortBy.wins, label: 'W', name: 'Wins', cellClass: 'text-center' },
-    { field: SortBy.losses, label: 'L', name: 'Losses', cellClass: 'text-center' },
-    { field: SortBy.ties, label: 'T', name: 'Ties', cellClass: 'text-center' },
+    { field: SortBy.wins, label: 'W', name: 'Wins', cellClass: 'record text-center' },
+    { field: SortBy.losses, label: 'L', name: 'Losses', cellClass: 'record text-center' },
+    { field: SortBy.ties, label: 'T', name: 'Ties', cellClass: 'record text-center' },
+    { label: 'Movement', cellClass: 'movement d-none d-sm-table-cell text-center' },
     { field: SortBy.id, label: 'ID', cellClass: 'd-none d-sm-table-cell text-end' }
   ];
 
@@ -77,6 +86,20 @@ export class StandingsComponent {
    */
   isLeader(entry: StandingsEntry): boolean {
     return this.isComplete && entry.position === 1;
+  }
+
+  /**
+   * The Movement as the row shows it: the symbol sighted users see ("▲2", "▼1", or a dash when the Pokémon stayed
+   * or no Round was processed on the page), the text assistive technology reads instead, and the cell's colour
+   */
+  getMovement(entry: StandingsEntry): MovementView {
+    if (!entry.movement) {
+      return { symbol: '–', text: 'no change', cellClass: 'text-muted' };
+    }
+    if (entry.movement > 0) {
+      return { symbol: `▲${entry.movement}`, text: `up ${entry.movement}`, cellClass: 'text-success-emphasis' };
+    }
+    return { symbol: `▼${-entry.movement}`, text: `down ${-entry.movement}`, cellClass: 'text-danger-emphasis' };
   }
 
   /**

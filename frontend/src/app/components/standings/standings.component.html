@@ -7,20 +7,24 @@
           <span aria-hidden="true">#</span>
           <span class="visually-hidden">Position</span>
         </th>
-        @for (column of columns; track column.field) {
-          <th scope="col" [class]="column.cellClass" [attr.aria-sort]="getAriaSort(column.field)">
-            <button type="button" class="btn btn-link sort-header" (click)="sort(column.field)">
-              @if (column.name) {
-                <span aria-hidden="true">{{ column.label }}</span>
-                <span class="visually-hidden">{{ column.name }}</span>
-              } @else {
-                {{ column.label }}
-              }
-              @if (getSortIcon(column.field)) {
-                <i class="ms-1" [ngClass]="getSortIcon(column.field)" aria-hidden="true"></i>
-              }
-            </button>
-          </th>
+        @for (column of columns; track column.label) {
+          @if (column.field) {
+            <th scope="col" [class]="column.cellClass" [attr.aria-sort]="getAriaSort(column.field)">
+              <button type="button" class="btn btn-link sort-header" (click)="sort(column.field)">
+                @if (column.name) {
+                  <span aria-hidden="true">{{ column.label }}</span>
+                  <span class="visually-hidden">{{ column.name }}</span>
+                } @else {
+                  {{ column.label }}
+                }
+                @if (getSortIcon(column.field)) {
+                  <i class="ms-1" [ngClass]="getSortIcon(column.field)" aria-hidden="true"></i>
+                }
+              </button>
+            </th>
+          } @else {
+            <th scope="col" [class]="column.cellClass">{{ column.label }}</th>
+          }
         }
       </tr>
     </thead>
@@ -49,6 +53,11 @@
           <td class="wins text-center fw-semibold">{{ entry.wins }}</td>
           <td class="losses text-center">{{ entry.losses }}</td>
           <td class="ties text-center">{{ entry.ties }}</td>
+          @let movement = getMovement(entry);
+          <td class="movement d-none d-sm-table-cell text-center" [ngClass]="movement.cellClass">
+            <span aria-hidden="true">{{ movement.symbol }}</span>
+            <span class="visually-hidden">{{ movement.text }}</span>
+          </td>
           <td class="pokemon-id d-none d-sm-table-cell text-end text-muted">{{ formatId(entry) }}</td>
         </tr>
       }

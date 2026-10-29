@@ -7,6 +7,7 @@ import { Subscription, map, of, switchMap } from 'rxjs';
 import { ROUND_COUNT, Tournament } from '../../models/tournament.model';
 import { Round } from '../../models/round.model';
 import { StandingsEntry } from '../../models/standings-entry.model';
+import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
 import { RoundByRoundService } from '../../services/round-by-round.service';
 import { StandingsComponent } from '../../components/standings/standings.component';
@@ -48,6 +49,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
   currentSortDirection: SortDirection = SortDirection.desc;
 
   private tournamentId = '';
+  /** The Standings before the last Round processed on this page, for the Movement; null until one is */
+  private previousStandings: TournamentPokemon[] | null = null;
   /** Rounds fetched or played so far, by number; a played Round never changes, so each is fetched once */
   private readonly playedRounds = new Map<number, Round>();
   /** A chip's Round still loading; dropped when another Round takes the panel, so its late answer can't replace it */
@@ -112,12 +115,12 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * The current Standings with their Positions, sorted locally by the clicked header;
+   * The current Standings with their Positions and Movement, sorted locally by the clicked header;
    * Pokémon equal on that field keep the default order, so the Standings are deterministic
    */
   get sortedStandings(): StandingsEntry[] {
     const direction = this.currentSortDirection === SortDirection.desc ? -1 : 1;
-    return positionStandings(this.tournament?.standings ?? [])
+    return positionStandings(this.tournament?.standings ?? [], this.previousStandings)
       .sort((a, b) => direction * this.compareBySortField(a, b) || compareByDefaultOrder(a, b));
   }
 
@@ -143,6 +146,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
     this.roundRequest?.unsubscribe();
     this.processRequest?.unsubscribe();
     this.isProcessing = false;
+    // A loaded Tournament has no Round this page witnessed, so the Standings show no Movement
+    this.previousStandings = null;
 
     this.loadRequest = this.roundByRoundService.getTournament(this.tournamentId).pipe(
       switchMap((tournament) => tournament.roundsPlayed === 0
@@ -167,7 +172,8 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * Processes the next Round, then shows it and the Standings it left behind.
+   * Processes the next Round, then shows it and the Standings it left behind, keeping the ones it replaces
+   * so each row can show its Movement.
    * A failure shows a toast and leaves the page as it was; a 409 means another tab completed the Tournament,
    * so the page reloads the Tournament and its last Round, and only then says so.
    */
@@ -180,6 +186,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
         next: (processedRound) => {
           this.roundRequest?.unsubscribe();
           this.showRound({ roundNumber: processedRound.roundNumber, battles: processedRound.battles });
+          this.previousStandings = this.tournament!.standings;
           this.tournament = {
             ...this.tournament!,
             roundsPlayed: processedRound.roundNumber,

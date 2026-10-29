@@ -173,6 +173,49 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
+   * Verifies that every row shows a dash for Movement on load, that after Process Round each row shows how many
+   * Positions its Pokémon moved (up, down or a dash), told apart by symbol and accessible text, and that neither
+   * a header sort nor reviewing an earlier Round with a chip changes the Movement.
+   */
+  it('should show each Pokémon\'s Movement after Process Round, and a dash on load', async () => {
+    const harness = await openTournamentPage(createTournamentWithRecords([
+      { wins: 2, losses: 0, ties: 0 },
+      { wins: 1, losses: 1, ties: 0 },
+      { wins: 1, losses: 1, ties: 0 },
+      { wins: 0, losses: 2, ties: 0 }
+    ], 1));
+    const page = harness.routeNativeElement!;
+    expect(movements(page)).toEqual(Array.from({ length: 16 }, () => '–'));
+    expect(movementTexts(page)[0]).toBe('no change');
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush({
+      ...createProcessedRound(2),
+      standings: createTournamentWithRecords([
+        { wins: 2, losses: 1, ties: 0 },
+        { wins: 2, losses: 1, ties: 0 },
+        { wins: 1, losses: 2, ties: 0 },
+        { wins: 1, losses: 2, ties: 0 }
+      ]).standings
+    });
+    harness.detectChanges();
+
+    expect(standingsNames(page).slice(0, 4)).toEqual(['Pokemon1', 'Pokemon2', 'Pokemon3', 'Pokemon4']);
+    expect(movements(page).slice(0, 5)).toEqual(['–', '▲1', '▼1', '▲13', '▼1']);
+    expect(movementTexts(page).slice(0, 4)).toEqual(['no change', 'up 1', 'down 1', 'up 13']);
+
+    header(page, 'Pokémon').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[0]).toBe('Pokemon1');
+    expect(movements(page).slice(0, 2)).toEqual(['–', '▼1']);
+
+    page.querySelectorAll<HTMLButtonElement>('button.round-chip')[0].click();
+    harness.detectChanges();
+    expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 1');
+    expect(movements(page).slice(0, 2)).toEqual(['–', '▼1']);
+  });
+
+  /**
    * Verifies that a Tournament still in play highlights no row, and that once Round 15 makes it Complete
    * every row on Position 1 is highlighted with a trophy, and only those.
    */
@@ -683,6 +726,16 @@ describe('RoundByRoundTournamentComponent', () => {
   function headerName(button: HTMLElement): string {
     const hiddenName = button.querySelector('.visually-hidden')?.textContent?.trim();
     return hiddenName ?? button.textContent?.trim() ?? '';
+  }
+
+  /** What sighted users see in the Movement column, row by row */
+  function movements(page: HTMLElement): string[] {
+    return standingsRows(page).map((row) => row.querySelector('.movement [aria-hidden="true"]')?.textContent?.trim() ?? '');
+  }
+
+  /** What assistive technology reads in the Movement column, row by row */
+  function movementTexts(page: HTMLElement): string[] {
+    return standingsRows(page).map((row) => row.querySelector('.movement .visually-hidden')?.textContent?.trim() ?? '');
   }
 
   function leaderNames(page: HTMLElement): string[] {
