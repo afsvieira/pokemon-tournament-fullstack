@@ -1,23 +1,26 @@
-<!-- Round panel - the Round's 8 Battles: who fought whom and who won -->
+<!-- Round panel - the Round's 8 Battles: who fought whom and who won, marked on the winner's name -->
 <div class="card border-secondary mb-4 round-panel">
   @if (round) {
     <div class="card-header bg-transparent border-secondary fw-semibold">Round {{ round.roundNumber }}</div>
     <div class="list-group list-group-flush">
       @for (battle of round.battles; track battle.id) {
-        <!-- Clicking a row opens the Battle in a modal -->
+        <!-- Clicking a row opens the Battle in a modal; the four cells are laid out by the grid in the stylesheet -->
         <button
           type="button"
-          class="list-group-item list-group-item-action d-flex flex-wrap align-items-center gap-3 battle-row"
+          class="list-group-item list-group-item-action battle-row"
+          [attr.aria-label]="getRowLabel(battle)"
           (click)="selectBattle(battle)">
           <span class="text-muted battle-number">Battle {{ battle.id }}</span>
 
-          <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon1 }"></ng-container>
-          <span class="text-muted">vs</span>
-          <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon2 }"></ng-container>
-
-          <span class="ms-auto fw-semibold result" [ngClass]="getResultClass(battle)">
-            {{ getResultLabel(battle) }}
+          <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon1, battle: battle }"></ng-container>
+          <span class="battle-marker text-center">
+            @if (isTie(battle)) {
+              <span class="badge rounded-pill text-bg-secondary">Tie</span>
+            } @else {
+              <span class="text-muted">vs</span>
+            }
           </span>
+          <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon2, battle: battle }"></ng-container>
         </button>
       }
     </div>
@@ -29,11 +32,17 @@
   }
 </div>
 
-<!-- One side of a Battle: type icon, name and base experience -->
-<ng-template #fighter let-pokemon>
-  <span class="fighter">
-    <i class="me-1" [ngClass]="getTypeIcon(pokemon.type)"></i>
-    <span class="fw-semibold">{{ pokemon.name }}</span>
-    <small class="text-muted ms-1">{{ pokemon.baseExperience }} XP</small>
+<!-- One side of a Battle: type icon, name and base experience; the winner is bold, green and carries a trophy -->
+<ng-template #fighter let-pokemon let-battle="battle">
+  <span class="fighter d-flex align-items-center gap-1">
+    <i [ngClass]="getTypeIcon(pokemon.type)" aria-hidden="true"></i>
+    <span class="visually-hidden">{{ pokemon.type | titlecase }}</span>
+    @if (isWinner(battle, pokemon)) {
+      <i class="fas fa-trophy text-success-emphasis" aria-hidden="true"></i>
+      <span class="fighter-name text-truncate fw-bold text-success-emphasis">{{ pokemon.name }}</span>
+    } @else {
+      <span class="fighter-name text-truncate text-body-secondary">{{ pokemon.name }}</span>
+    }
+    <small class="text-muted text-nowrap">{{ pokemon.baseExperience }} XP</small>
   </span>
 </ng-template>

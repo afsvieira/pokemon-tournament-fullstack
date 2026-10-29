@@ -1,14 +1,15 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { NgClass, NgTemplateOutlet } from '@angular/common';
+import { NgClass, NgTemplateOutlet, TitleCasePipe } from '@angular/common';
 import { Round } from '../../models/round.model';
 import { Battle } from '../../models/battle.model';
+import { BattlePokemon } from '../../models/battle-pokemon.model';
 import { getTypeIconClass } from '../../models/icons.mapping';
-import { getBattleResultClass, getBattleResultLabel } from '../../shared/battle-result';
+import { getBattleResultLabel, isBattleTie, isBattleWinner } from '../../shared/battle-result';
 
 @Component({
   selector: 'app-round-panel',
   standalone: true,
-  imports: [NgClass, NgTemplateOutlet],
+  imports: [NgClass, NgTemplateOutlet, TitleCasePipe],
   templateUrl: './round-panel.component.html',
   styleUrl: './round-panel.component.scss'
 })
@@ -19,17 +20,24 @@ export class RoundPanelComponent {
   @Output() battleSelected = new EventEmitter<number>();
 
   /**
-   * The Battle's result, e.g. "Pikachu wins" or "Tie"
+   * The row's accessible name, the whole result in one go: "Battle 33, Alakazam vs Slowbro, Alakazam wins"
    */
-  getResultLabel(battle: Battle): string {
-    return getBattleResultLabel(battle);
+  getRowLabel(battle: Battle): string {
+    return `Battle ${battle.id}, ${battle.pokemon1.name} vs ${battle.pokemon2.name}, ${getBattleResultLabel(battle)}`;
   }
 
   /**
-   * Colours a win green and a tie grey
+   * Whether the Battle ended in a tie, so the centre marker reads "Tie" instead of "vs"
    */
-  getResultClass(battle: Battle): string {
-    return getBattleResultClass(battle);
+  isTie(battle: Battle): boolean {
+    return isBattleTie(battle);
+  }
+
+  /**
+   * Whether this Pokémon won the Battle, so its name is marked in place
+   */
+  isWinner(battle: Battle, pokemon: BattlePokemon): boolean {
+    return isBattleWinner(battle, pokemon);
   }
 
   /**

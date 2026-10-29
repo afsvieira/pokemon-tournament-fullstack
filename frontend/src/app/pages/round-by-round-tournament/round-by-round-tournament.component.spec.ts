@@ -159,11 +159,33 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(battleRows[0].textContent).toContain('Pokemon2');
     expect(battleRows[0].textContent).toContain('51 XP');
     expect(battleRows[0].querySelectorAll('i.fa-circle').length).toBe(2);
-    expect(battleRows[0].textContent).toContain('Pokemon1 wins');
-    expect(battleRows[2].textContent).toContain('Tie');
     expect(page.textContent).toContain('Round 1 of 15');
     expect(page.textContent).not.toContain('No Rounds yet');
     expect(cardWins(page, 'Pokemon1')).toBe('1');
+  });
+
+  /**
+   * Verifies that a Battle row marks the winner in place: the winner's name carries a trophy and the loser's doesn't,
+   * a tie shows "Tie" between two unmarked names, the row's accessible name reads the whole result,
+   * and the old trailing "X wins" text is gone.
+   */
+  it('should mark the winner in place in each Battle row, and Tie between two unmarked names', async () => {
+    const harness = await openTournamentPage({ ...tournament, roundsPlayed: 1 });
+    const battleRows = harness.routeNativeElement!.querySelectorAll('.battle-row');
+
+    const [winner, loser] = Array.from(battleRows[0].querySelectorAll('.fighter'));
+    expect(winner.textContent).toContain('Pokemon1');
+    expect(winner.querySelector('.fa-trophy')).not.toBeNull();
+    expect(loser.textContent).toContain('Pokemon2');
+    expect(loser.querySelector('.fa-trophy')).toBeNull();
+    expect(battleRows[0].getAttribute('aria-label')).toBe('Battle 1, Pokemon1 vs Pokemon2, Pokemon1 wins');
+    expect(battleRows[0].textContent).not.toContain('wins');
+
+    const tie = battleRows[2];
+    expect(tie.querySelector('.battle-marker')?.textContent?.trim()).toBe('Tie');
+    expect(tie.querySelectorAll('.fighter').length).toBe(2);
+    expect(tie.querySelector('.fa-trophy')).toBeNull();
+    expect(tie.getAttribute('aria-label')).toBe('Battle 3, Pokemon5 vs Pokemon6, Tie');
   });
 
   /**
@@ -354,9 +376,9 @@ describe('RoundByRoundTournamentComponent', () => {
 
   /**
    * Verifies that clicking a Battle row opens a modal that fetches the Battle and shows both Pokémon,
-   * with image, type and base experience, and the winner; and that the modal closes.
+   * with image, type and base experience, the winner marked as in the row; and that the modal closes.
    */
-  it('should open a Battle in a modal with both Pokémon and the winner', async () => {
+  it('should open a Battle in a modal with both Pokémon and the winner marked', async () => {
     const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
     const page = harness.routeNativeElement!;
 
@@ -376,6 +398,11 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(modal.textContent).toContain('Pokemon2');
     expect(modal.textContent).toContain('51 XP');
     expect(modal.textContent).toContain('Normal');
+    const [winner, loser] = Array.from(modal.querySelectorAll('.fighter'));
+    expect(winner.textContent).toContain('Pokemon1');
+    expect(winner.querySelector('.fa-trophy')).not.toBeNull();
+    expect(loser.textContent).toContain('Pokemon2');
+    expect(loser.querySelector('.fa-trophy')).toBeNull();
     expect(modal.querySelector('.battle-result')?.textContent).toContain('Pokemon1 wins');
 
     modal.querySelector<HTMLButtonElement>('button.btn-close')!.click();
@@ -385,9 +412,9 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
-   * Verifies that the modal of a tied Battle shows "Tie" instead of a winner.
+   * Verifies that the modal of a tied Battle shows "Tie" instead of a winner, and marks neither Pokémon.
    */
-  it('should show Tie in the Battle modal when the Battle is a tie', async () => {
+  it('should show Tie and mark neither Pokémon in the Battle modal when the Battle is a tie', async () => {
     const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
     const page = harness.routeNativeElement!;
 
@@ -396,7 +423,10 @@ describe('RoundByRoundTournamentComponent', () => {
     httpMock.expectOne({ method: 'GET', url: `${tournamentUrl}/battles/19` }).flush(createRound(3).battles[2]);
     harness.detectChanges();
 
-    expect(page.querySelector('app-battle-modal .battle-result')?.textContent?.trim()).toBe('Tie');
+    const modal = page.querySelector('app-battle-modal')!;
+    expect(modal.querySelector('.battle-result')?.textContent?.trim()).toBe('Tie');
+    expect(modal.querySelectorAll('.fighter').length).toBe(2);
+    expect(modal.querySelector('.fa-trophy')).toBeNull();
   });
 
   /**
