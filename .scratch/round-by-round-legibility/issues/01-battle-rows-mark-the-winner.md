@@ -8,21 +8,27 @@
 
 **Blocked by:** None (can start immediately).
 
-**Status:** ready-for-agent
+**Status:** done
 
 **UI**
 
-- [ ] A Battle row is one native button with four cells: Battle number, first fighter, centre marker, second fighter. The trailing result column no longer exists.
-- [ ] The winner's fighter shows a trophy icon (hidden from assistive technology), a bold name and the theme's success emphasis colour; the loser's fighter shows a plain-weight name in the theme's secondary body colour.
-- [ ] On a tie, both fighters get the loser's plain treatment and the centre marker is a small secondary pill reading "Tie" instead of "vs".
-- [ ] Each row's accessible name reads "Battle 33, Alakazam vs Slowbro, Alakazam wins", or ends in "Tie", built from the existing result-wording helper. The helper that picked a colour class for the old column is removed.
-- [ ] Type icons in rows and in the Battle modal are hidden from assistive technology and followed by a visually hidden type name.
-- [ ] Below the small breakpoint the Battle number sits on its own line and the fighters and marker form a three-column grid with truncating names ("Farfetch'd", "Mr. Mime" fit without breaking the row).
-- [ ] The Battle modal's winner card keeps its success border and gains the same bold name and trophy; its result line keeps the same wording.
-- [ ] Copy uses only glossary terms: Battle, Round, Tie.
+- [x] A Battle row is one native button with four cells: Battle number, first fighter, centre marker, second fighter. The trailing result column no longer exists.
+- [x] The winner's fighter shows a trophy icon (hidden from assistive technology), a bold name and the theme's success emphasis colour; the loser's fighter shows a plain-weight name in the theme's secondary body colour.
+- [x] On a tie, both fighters get the loser's plain treatment and the centre marker is a small secondary pill reading "Tie" instead of "vs".
+- [x] Each row's accessible name reads "Battle 33, Alakazam vs Slowbro, Alakazam wins", or ends in "Tie", built from the existing result-wording helper. The helper that picked a colour class for the old column is removed.
+- [x] Type icons in rows and in the Battle modal are hidden from assistive technology and followed by a visually hidden type name.
+- [x] Below the small breakpoint the Battle number sits on its own line and the fighters and marker form a three-column grid with truncating names ("Farfetch'd", "Mr. Mime" fit without breaking the row).
+- [x] The Battle modal's winner card keeps its success border and gains the same bold name and trophy; its result line keeps the same wording.
+- [x] Copy uses only glossary terms: Battle, Round, Tie.
 
 **Tests and docs**
 
-- [ ] Routed-pages seam, Round-by-Round page spec: the winner's name is marked and the loser's is not; a tie shows "Tie" between two unmarked names and no trophy; the row's accessible name reads as above; the old trailing result text is absent; the modal marks the winner the same way.
-- [ ] Shared test Round builder keeps producing one tie per Round so both cases are covered.
-- [ ] README's Round by Round feature bullets describe the in-place winner marking and the Tie pill.
+- [x] Routed-pages seam, Round-by-Round page spec: the winner's name is marked and the loser's is not; a tie shows "Tie" between two unmarked names and no trophy; the row's accessible name reads as above; the old trailing result text is absent; the modal marks the winner the same way.
+- [x] Shared test Round builder keeps producing one tie per Round so both cases are covered.
+- [x] README's Round by Round feature bullets describe the in-place winner marking and the Tie pill.
+
+## Comments
+
+**Done** in commit 1f64b1c (feat(frontend): mark the winner in place in Battle rows and the Battle modal).
+
+Note: the row is one button with an `aria-label`, which replaces the name computed from its content, so the visually hidden type names inside a row are not announced by the row itself (the label reads "Battle N, A vs B, A wins" as asked). They are announced in the Battle modal. The modal's result line keeps its wording and loses the colour class that the retired helper chose; the winner card carries the colour now.
