@@ -1,0 +1,57 @@
+<!-- Standings - one row per Pokémon with its Position, record and id; the headers sort -->
+<div class="card border-secondary standings-card">
+  <table class="table table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th scope="col" class="position">
+          <span aria-hidden="true">#</span>
+          <span class="visually-hidden">Position</span>
+        </th>
+        @for (column of columns; track column.field) {
+          <th scope="col" [class]="column.cellClass" [attr.aria-sort]="getAriaSort(column.field)">
+            <button type="button" class="btn btn-link sort-header" (click)="sort(column.field)">
+              @if (column.name) {
+                <span aria-hidden="true">{{ column.label }}</span>
+                <span class="visually-hidden">{{ column.name }}</span>
+              } @else {
+                {{ column.label }}
+              }
+              @if (getSortIcon(column.field)) {
+                <i class="ms-1" [ngClass]="getSortIcon(column.field)" aria-hidden="true"></i>
+              }
+            </button>
+          </th>
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of entries; track entry.id) {
+        <tr [class.table-success]="isLeader(entry)" [class.leader]="isLeader(entry)">
+          <td class="position text-muted">{{ entry.position }}</td>
+          <td>
+            <span class="d-flex align-items-center gap-2">
+              <!-- The sprite where a club crest would be -->
+              @if (entry.imageUrl) {
+                <img [src]="entry.imageUrl" alt="" width="32" height="32" class="sprite" loading="lazy">
+              } @else {
+                <span class="sprite text-center" aria-hidden="true">🎴</span>
+              }
+              <span class="pokemon-name fw-semibold text-truncate" [class.text-success-emphasis]="isLeader(entry)">
+                {{ entry.name }}
+              </span>
+              @if (isLeader(entry)) {
+                <i class="fas fa-trophy text-success-emphasis" aria-hidden="true"></i>
+              }
+              <i [ngClass]="getTypeIcon(entry.type)" aria-hidden="true"></i>
+              <span class="visually-hidden">{{ entry.type | titlecase }}</span>
+            </span>
+          </td>
+          <td class="wins text-center fw-semibold">{{ entry.wins }}</td>
+          <td class="losses text-center">{{ entry.losses }}</td>
+          <td class="ties text-center">{{ entry.ties }}</td>
+          <td class="pokemon-id d-none d-sm-table-cell text-end text-muted">{{ formatId(entry) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -5,7 +5,12 @@ import { Router, provideRouter } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { routes } from '../../app.routes';
 import { API_BASE_URL } from '../../services/api-base-url';
-import { createProcessedRound, createRound, createStartedTournament } from '../../testing/test-tournament';
+import {
+  createProcessedRound,
+  createRound,
+  createStartedTournament,
+  createTournamentWithRecords
+} from '../../testing/test-tournament';
 import { Tournament } from '../../models/tournament.model';
 
 /**
@@ -28,8 +33,8 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
-   * Verifies that a just-started Tournament shows its 16 Pokémon at 0 wins, losses and ties,
-   * Round 0 of 15, an empty Round panel, and no "View Battles" buttons on the cards.
+   * Verifies that a just-started Tournament shows its 16 Pokémon in the Standings, Round 0 of 15,
+   * an empty Round panel, and no "View Battles" buttons.
    */
   it('should show the 16 Pokémon without View Battles when the Tournament has no Rounds yet', async () => {
     const harness = await RouterTestingHarness.create(`/round-by-round/${tournament.id}`);
@@ -38,7 +43,7 @@ describe('RoundByRoundTournamentComponent', () => {
     harness.detectChanges();
 
     const page = harness.routeNativeElement!;
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+    expect(standingsRows(page).length).toBe(16);
     expect(page.textContent).toContain('Round 0 of 15');
     expect(page.textContent).toContain('No Rounds yet');
     expect(page.textContent).not.toContain('View Battles');
@@ -46,21 +51,152 @@ describe('RoundByRoundTournamentComponent', () => {
   });
 
   /**
-   * Verifies that the cards are sorted by wins descending by default, and re-sorted locally,
-   * without another request, when the sort direction is toggled.
+   * Verifies that the Standings list one row per Pokémon in Position order (most wins, then fewest losses, then name),
+   * that equal records share a Position and the next one skips (1, 1, 3), that the row shows the sprite, type,
+   * W, L, T and id, and that neither the win rate nor the Instant Simulation's sort controls are on the page.
    */
-  it('should sort the cards locally, by wins descending by default', async () => {
-    const standings = tournament.standings.map((pokemon, index) => ({ ...pokemon, wins: index }));
-    const harness = await RouterTestingHarness.create(`/round-by-round/${tournament.id}`);
-    httpMock.expectOne({ method: 'GET', url: tournamentUrl }).flush({ ...tournament, standings });
+  it('should list the Standings in Position order, sharing a Position for equal records', async () => {
+    const harness = await openTournamentPage(createTournamentWithRecords([
+      { wins: 5, losses: 1, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 5, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 5, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 0, losses: 0, ties: 0 },
+      { wins: 4, losses: 0, ties: 1 }
+    ]));
+    const page = harness.routeNativeElement!;
+
+    expect(standingsNames(page).slice(0, 5)).toEqual(['Pokemon3', 'Pokemon7', 'Pokemon1', 'Pokemon12', 'Pokemon10']);
+    expect(standingsPositions(page).slice(0, 5)).toEqual(['1', '1', '3', '4', '5']);
+    expect(standingsPositions(page)[15]).toBe('5');
+    const leader = standingsRows(page)[0];
+    expect(leader.querySelector('img')?.getAttribute('src')).toBe('https://img.example/3.png');
+    expect(leader.querySelector('.visually-hidden')?.textContent?.trim()).toBe('Normal');
+    expect(leader.querySelector('.wins')?.textContent?.trim()).toBe('5');
+    expect(leader.querySelector('.losses')?.textContent?.trim()).toBe('0');
+    expect(leader.querySelector('.ties')?.textContent?.trim()).toBe('0');
+    expect(leader.querySelector('.pokemon-id')?.textContent?.trim()).toBe('#003');
+    expect(page.textContent).toContain('Standings');
+    expect(page.textContent).not.toContain('Win Rate');
+    expect(page.querySelector('app-sort-controls')).toBeNull();
+    expect(page.querySelector('app-pokemon-card')).toBeNull();
+  });
+
+  /**
+   * Verifies that clicking a header sorts the Standings by that column (W, L and T descending first, Name and ID
+   * ascending first), that a second click flips the direction, that aria-sort follows the sorted header,
+   * that every Pokémon keeps its Position whatever the order, and that sorting sends no request.
+   */
+  it('should sort the Standings by the clicked header, flipping on a second click, keeping Positions', async () => {
+    const harness = await openTournamentPage(createTournamentWithRecords([
+      { wins: 3, losses: 2, ties: 0 },
+      { wins: 4, losses: 1, ties: 0 },
+      { wins: 2, losses: 1, ties: 2 }
+    ]));
+    const page = harness.routeNativeElement!;
+    expect(standingsNames(page).slice(0, 3)).toEqual(['Pokemon2', 'Pokemon1', 'Pokemon3']);
+    expect(ariaSort(page)).toEqual({ Wins: 'descending' });
+
+    header(page, 'Losses').click();
+    harness.detectChanges();
+    expect(standingsNames(page).slice(0, 2)).toEqual(['Pokemon1', 'Pokemon2']);
+    expect(standingsPositions(page).slice(0, 2)).toEqual(['2', '1']);
+    expect(ariaSort(page)).toEqual({ Losses: 'descending' });
+
+    header(page, 'Losses').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[15]).toBe('Pokemon1');
+    expect(standingsPositions(page)[15]).toBe('2');
+    expect(ariaSort(page)).toEqual({ Losses: 'ascending' });
+
+    header(page, 'Ties').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[0]).toBe('Pokemon3');
+    expect(ariaSort(page)).toEqual({ Ties: 'descending' });
+
+    header(page, 'Ties').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[15]).toBe('Pokemon3');
+    expect(ariaSort(page)).toEqual({ Ties: 'ascending' });
+
+    header(page, 'Pokémon').click();
+    harness.detectChanges();
+    expect(standingsNames(page).slice(0, 3)).toEqual(['Pokemon1', 'Pokemon10', 'Pokemon11']);
+    expect(ariaSort(page)).toEqual({ Pokémon: 'ascending' });
+
+    header(page, 'Pokémon').click();
+    harness.detectChanges();
+    expect(standingsNames(page).slice(0, 2)).toEqual(['Pokemon9', 'Pokemon8']);
+    expect(ariaSort(page)).toEqual({ Pokémon: 'descending' });
+
+    header(page, 'ID').click();
+    harness.detectChanges();
+    expect(standingsNames(page).slice(0, 3)).toEqual(['Pokemon1', 'Pokemon2', 'Pokemon3']);
+    expect(ariaSort(page)).toEqual({ ID: 'ascending' });
+
+    header(page, 'ID').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[0]).toBe('Pokemon16');
+    expect(ariaSort(page)).toEqual({ ID: 'descending' });
+
+    header(page, 'Wins').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[0]).toBe('Pokemon2');
+    expect(ariaSort(page)).toEqual({ Wins: 'descending' });
+
+    header(page, 'Wins').click();
+    harness.detectChanges();
+    expect(standingsNames(page)[15]).toBe('Pokemon2');
+    expect(ariaSort(page)).toEqual({ Wins: 'ascending' });
+  });
+
+  /**
+   * Verifies that a Complete Tournament with a single leader highlights that one row with a trophy.
+   */
+  it('should highlight the single leader once the Tournament is Complete', async () => {
+    const harness = await openTournamentPage(createTournamentWithRecords([
+      { wins: 13, losses: 1, ties: 1 },
+      { wins: 14, losses: 0, ties: 1 },
+      { wins: 12, losses: 2, ties: 1 }
+    ], 15));
+    const page = harness.routeNativeElement!;
+
+    expect(leaderNames(page)).toEqual(['Pokemon2']);
+    expect(page.querySelectorAll('app-standings .fa-trophy').length).toBe(1);
+    expect(standingsPositions(page).slice(0, 3)).toEqual(['1', '2', '3']);
+  });
+
+  /**
+   * Verifies that a Tournament still in play highlights no row, and that once Round 15 makes it Complete
+   * every row on Position 1 is highlighted with a trophy, and only those.
+   */
+  it('should highlight every row on Position 1 once the Tournament is Complete', async () => {
+    const sharedLead = [
+      { wins: 14, losses: 0, ties: 1 },
+      { wins: 13, losses: 1, ties: 1 },
+      { wins: 14, losses: 0, ties: 1 }
+    ];
+    const harness = await openTournamentPage(createTournamentWithRecords(sharedLead, 14));
+    const page = harness.routeNativeElement!;
+    expect(leaderNames(page)).toEqual([]);
+    expect(page.querySelector('app-standings .fa-trophy')).toBeNull();
+
+    page.querySelector<HTMLButtonElement>('button.process-round')!.click();
+    httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush({
+      ...createProcessedRound(15),
+      standings: createTournamentWithRecords(sharedLead, 15).standings
+    });
     harness.detectChanges();
 
-    expect(firstCardName(harness)).toBe('Pokemon16');
-
-    harness.routeNativeElement!.querySelector<HTMLButtonElement>('.sort-direction-btn')!.click();
-    harness.detectChanges();
-
-    expect(firstCardName(harness)).toBe('Pokemon1');
+    expect(leaderNames(page)).toEqual(['Pokemon1', 'Pokemon3']);
+    expect(page.querySelectorAll('app-standings .fa-trophy').length).toBe(2);
+    expect(standingsPositions(page).slice(0, 3)).toEqual(['1', '1', '3']);
   });
 
   /**
@@ -74,14 +210,14 @@ describe('RoundByRoundTournamentComponent', () => {
 
     const page = harness.routeNativeElement!;
     expect(page.querySelector('.load-error')?.textContent).toContain('Server error occurred. Please try again later.');
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(0);
+    expect(standingsRows(page).length).toBe(0);
 
     page.querySelector<HTMLButtonElement>('.load-error button')!.click();
     httpMock.expectOne({ method: 'GET', url: tournamentUrl }).flush(tournament);
     harness.detectChanges();
 
     expect(page.querySelector('.load-error')).toBeNull();
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+    expect(standingsRows(page).length).toBe(16);
   });
 
   /**
@@ -95,7 +231,7 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(page.textContent).toContain('This Tournament no longer exists.');
     expect(page.textContent).toContain('Tournaments are kept in memory only until the API restarts.');
     expect(page.querySelector('.load-error')).toBeNull();
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(0);
+    expect(standingsRows(page).length).toBe(0);
     expect(page.querySelector('.tournament-gone button.start-tournament')).not.toBeNull();
   });
 
@@ -133,19 +269,19 @@ describe('RoundByRoundTournamentComponent', () => {
     const page = harness.routeNativeElement!;
     expect(TestBed.inject(Router).url).toBe(`/round-by-round/${newTournament.id}`);
     expect(page.textContent).not.toContain('This Tournament no longer exists.');
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+    expect(standingsRows(page).length).toBe(16);
   });
 
   /**
    * Verifies that Process Round shows the new Round's 8 Battles with their results,
-   * moves the header to "Round 1 of 15" and updates the cards from the returned Standings.
+   * moves the header to "Round 1 of 15" and updates the Standings from the returned ones.
    */
-  it('should show the Round and update the cards when Process Round succeeds', async () => {
+  it('should show the Round and update the Standings when Process Round succeeds', async () => {
     const harness = await RouterTestingHarness.create(`/round-by-round/${tournament.id}`);
     httpMock.expectOne({ method: 'GET', url: tournamentUrl }).flush(tournament);
     harness.detectChanges();
     const page = harness.routeNativeElement!;
-    expect(cardWins(page, 'Pokemon1')).toBe('0');
+    expect(standingsWins(page, 'Pokemon1')).toBe('0');
 
     page.querySelector<HTMLButtonElement>('button.process-round')!.click();
     httpMock.expectOne({ method: 'POST', url: `${tournamentUrl}/rounds` }).flush(createProcessedRound(1));
@@ -161,7 +297,7 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(battleRows[0].querySelectorAll('i.fa-circle').length).toBe(2);
     expect(page.textContent).toContain('Round 1 of 15');
     expect(page.textContent).not.toContain('No Rounds yet');
-    expect(cardWins(page, 'Pokemon1')).toBe('1');
+    expect(standingsWins(page, 'Pokemon1')).toBe('1');
   });
 
   /**
@@ -286,7 +422,7 @@ describe('RoundByRoundTournamentComponent', () => {
 
   /**
    * Verifies that the page shows one chip per Round, with only the played ones enabled and the last one selected,
-   * that a chip shows its Round while the header and cards stay current, and that each Round is fetched only once.
+   * that a chip shows its Round while the header and Standings stay current, and that each Round is fetched only once.
    */
   it('should select played Rounds with the chips, fetching each Round only once', async () => {
     const harness = await openTournamentPage({ ...tournament, roundsPlayed: 3 });
@@ -306,7 +442,7 @@ describe('RoundByRoundTournamentComponent', () => {
     expect(selectedChip(page)).toBe('1');
     expect(page.querySelector('.battle-row')?.textContent).toContain('Battle 1');
     expect(page.textContent).toContain('Round 3 of 15');
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+    expect(standingsRows(page).length).toBe(16);
 
     chips[2].click();
     harness.detectChanges();
@@ -452,7 +588,7 @@ describe('RoundByRoundTournamentComponent', () => {
     harness.detectChanges();
 
     expect(page.querySelector('app-battle-modal')).toBeNull();
-    expect(page.querySelectorAll('app-pokemon-card').length).toBe(16);
+    expect(standingsRows(page).length).toBe(16);
   });
 
   /**
@@ -493,8 +629,8 @@ describe('RoundByRoundTournamentComponent', () => {
 
     expect(firstRequest.cancelled).toBeTrue();
     expect(TestBed.inject(Router).url).toBe(`/round-by-round/${other.id}`);
-    expect(firstCardName(harness)).toBe('Other1');
-    expect(harness.routeNativeElement!.querySelectorAll('app-pokemon-card').length).toBe(16);
+    expect(standingsNames(harness.routeNativeElement!)[0]).toBe('Other1');
+    expect(standingsRows(harness.routeNativeElement!).length).toBe(16);
   });
 
   /**
@@ -520,17 +656,47 @@ describe('RoundByRoundTournamentComponent', () => {
     return harness;
   }
 
-  function cardWins(page: HTMLElement, pokemonName: string): string {
-    const card = Array.from(page.querySelectorAll('app-pokemon-card'))
-      .find((element) => element.querySelector('.fs-5')?.textContent?.trim() === pokemonName);
-    return card?.querySelector('.text-success.fw-bold')?.textContent?.trim() ?? '';
+  function standingsRows(page: HTMLElement): HTMLElement[] {
+    return Array.from(page.querySelectorAll<HTMLElement>('app-standings tbody tr'));
+  }
+
+  function standingsNames(page: HTMLElement): string[] {
+    return standingsRows(page).map((row) => row.querySelector('.pokemon-name')?.textContent?.trim() ?? '');
+  }
+
+  function standingsPositions(page: HTMLElement): string[] {
+    return standingsRows(page).map((row) => row.querySelector('.position')?.textContent?.trim() ?? '');
+  }
+
+  /** A sortable header's button, found by the name assistive technology reads: Pokémon, Wins, Losses, Ties or ID */
+  function header(page: HTMLElement, name: string): HTMLButtonElement {
+    return Array.from(page.querySelectorAll<HTMLButtonElement>('app-standings th button'))
+      .find((button) => headerName(button) === name)!;
+  }
+
+  /** The sorted headers by name with their aria-sort; exactly one is expected */
+  function ariaSort(page: HTMLElement): Record<string, string> {
+    return Object.fromEntries(Array.from(page.querySelectorAll('app-standings th[aria-sort]'))
+      .map((th) => [headerName(th.querySelector('button')!), th.getAttribute('aria-sort') ?? '']));
+  }
+
+  function headerName(button: HTMLElement): string {
+    const hiddenName = button.querySelector('.visually-hidden')?.textContent?.trim();
+    return hiddenName ?? button.textContent?.trim() ?? '';
+  }
+
+  function leaderNames(page: HTMLElement): string[] {
+    return standingsRows(page)
+      .filter((row) => row.classList.contains('leader'))
+      .map((row) => row.querySelector('.pokemon-name')?.textContent?.trim() ?? '');
+  }
+
+  function standingsWins(page: HTMLElement, pokemonName: string): string {
+    const row = standingsRows(page).find((element) => element.querySelector('.pokemon-name')?.textContent?.trim() === pokemonName);
+    return row?.querySelector('.wins')?.textContent?.trim() ?? '';
   }
 
   function selectedChip(page: HTMLElement): string {
     return page.querySelector('button.round-chip[aria-pressed="true"]')?.textContent?.trim() ?? '';
-  }
-
-  function firstCardName(harness: RouterTestingHarness): string {
-    return harness.routeNativeElement!.querySelector('app-pokemon-card .fs-5')?.textContent?.trim() ?? '';
   }
 });

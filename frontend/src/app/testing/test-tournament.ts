@@ -27,6 +27,23 @@ export function createStartedTournament(): Tournament {
 }
 
 /**
+ * Builds a Tournament whose Standings carry the given records, by Start order; Pokémon past the list stay at 0-0-0.
+ * @param records - Wins, losses and ties for the first Pokémon
+ * @param roundsPlayed - How far the Tournament has got; 15 makes it Complete
+ */
+export function createTournamentWithRecords(
+  records: Pick<TournamentPokemon, 'wins' | 'losses' | 'ties'>[],
+  roundsPlayed = 0
+): Tournament {
+  const tournament = createStartedTournament();
+  return {
+    ...tournament,
+    roundsPlayed,
+    standings: tournament.standings.map((pokemon, index) => ({ ...pokemon, ...records[index] }))
+  };
+}
+
+/**
  * Builds a played Round of that Tournament: Battle i pits Pokemon(2i+1) against Pokemon(2i+2) and the first one wins,
  * except the Round's third Battle, which is a tie.
  */

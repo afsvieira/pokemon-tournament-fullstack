@@ -6,16 +6,16 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Subscription, map, of, switchMap } from 'rxjs';
 import { ROUND_COUNT, Tournament } from '../../models/tournament.model';
 import { Round } from '../../models/round.model';
-import { TournamentPokemon } from '../../models/tournament-pokemon.model';
+import { StandingsEntry } from '../../models/standings-entry.model';
 import { SortBy, SortDirection, SortOptions } from '../../models/sort-options.model';
 import { RoundByRoundService } from '../../services/round-by-round.service';
-import { PokemonCardComponent } from '../../components/pokemon-card/pokemon-card.component';
-import { SortControlsComponent } from '../../components/sort-controls/sort-controls.component';
+import { StandingsComponent } from '../../components/standings/standings.component';
 import { StartTournamentButtonComponent } from '../../components/start-tournament-button/start-tournament-button.component';
 import { RoundPanelComponent } from '../../components/round-panel/round-panel.component';
 import { ErrorToastComponent } from '../../components/error-toast/error-toast.component';
 import { BattleModalComponent } from '../../components/battle-modal/battle-modal.component';
 import { getErrorMessage } from '../../shared/error-message';
+import { compareByDefaultOrder, positionStandings } from '../../shared/standings';
 
 @Component({
   selector: 'app-round-by-round-tournament',
@@ -23,8 +23,7 @@ import { getErrorMessage } from '../../shared/error-message';
   imports: [
     DatePipe,
     RouterLink,
-    PokemonCardComponent,
-    SortControlsComponent,
+    StandingsComponent,
     StartTournamentButtonComponent,
     RoundPanelComponent,
     ErrorToastComponent,
@@ -113,16 +112,17 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * The current Standings, sorted locally with the sort controls
+   * The current Standings with their Positions, sorted locally by the clicked header;
+   * Pokémon equal on that field keep the default order, so the Standings are deterministic
    */
-  get sortedStandings(): TournamentPokemon[] {
+  get sortedStandings(): StandingsEntry[] {
     const direction = this.currentSortDirection === SortDirection.desc ? -1 : 1;
-    return [...(this.tournament?.standings ?? [])]
-      .sort((a, b) => direction * this.compareBySortField(a, b));
+    return positionStandings(this.tournament?.standings ?? [])
+      .sort((a, b) => direction * this.compareBySortField(a, b) || compareByDefaultOrder(a, b));
   }
 
   /**
-   * Handles sort change from sort controls component
+   * Handles a header click in the Standings
    */
   onSortChange(sortOptions: SortOptions): void {
     this.currentSortBy = sortOptions.sortBy;
@@ -203,7 +203,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
   }
 
   /**
-   * Shows a played Round in the Round panel, fetching it the first time only; the cards keep the current Standings.
+   * Shows a played Round in the Round panel, fetching it the first time only; the Standings stay current.
    * A failure shows a toast and keeps the Round that was selected.
    * @param roundNumber - The chip's Round number
    */
@@ -280,7 +280,7 @@ export class RoundByRoundTournamentComponent implements OnInit {
     this.currentRound = round;
   }
 
-  private compareBySortField(a: TournamentPokemon, b: TournamentPokemon): number {
+  private compareBySortField(a: StandingsEntry, b: StandingsEntry): number {
     const valueA = a[this.currentSortBy];
     const valueB = b[this.currentSortBy];
 

@@ -28,6 +28,10 @@ _Avoid_: Match, game, duel
 Each Pokémon's wins, losses and ties so far in a Tournament.
 _Avoid_: Ranking, leaderboard, table
 
+**Position**:
+Where a Pokémon stands in the Standings by the default order: most wins, then fewest losses, then name. Pokémon with equal wins, losses and ties share one Position and the next one skips.
+_Avoid_: Rank, place, seed
+
 **Tournament History**:
 The Tournaments started since the API last started.
 _Avoid_: Archive, log
