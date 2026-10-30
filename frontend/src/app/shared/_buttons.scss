@@ -1,14 +1,19 @@
+// The primary gradient, shared by the main action buttons and the active nav pill; it starts dark enough for white text
+// at every point
+$primary-gradient: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+
 // Gradient primary button for each page's main action
 @mixin primary-button {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: $primary-gradient;
   border: 2px solid #60a5fa;
   color: #ffffff;
   font-weight: 600;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  transition: all 0.3s ease;
+  // Not "all": the focus ring must show at once, not fade in
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
 
   &:hover {
-    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 100%);
     border-color: #3b82f6;
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
@@ -18,10 +23,13 @@
     transform: translateY(0);
   }
 
+  // A disabled button may still carry a message to read ("Try again in 42 s"): the grey background and the cursor
+  // say it is disabled, while the text keeps a colour that passes at full opacity
   &:disabled {
     background: rgba(148, 163, 184, 0.2);
     border-color: rgba(148, 163, 184, 0.3);
-    color: #64748b;
+    color: var(--bs-secondary-color);
+    opacity: 1;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;

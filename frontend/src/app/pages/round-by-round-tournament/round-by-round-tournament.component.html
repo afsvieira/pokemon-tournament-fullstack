@@ -39,7 +39,7 @@
   } @else if (tournament) {
     <!-- Tournament header with Process Round, or the Complete badge after Round 15 -->
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
-      <h1 class="h3 mb-0">Tournament · started {{ tournament.startedAt | date: 'dd/MM HH:mm' }}</h1>
+      <h1 class="h3 mb-0">Tournament · <span class="text-nowrap">started {{ tournament.startedAt | date: 'dd/MM/yyyy HH:mm' }}</span></h1>
       <div class="d-flex flex-wrap align-items-center gap-3">
         <span class="badge rounded-pill text-bg-secondary fs-6 px-3 py-2">{{ roundProgress }}</span>
         @if (isComplete) {
@@ -48,23 +48,31 @@
           <button
             type="button"
             class="btn btn-primary px-4 process-round"
-            [disabled]="isProcessing"
+            [disabled]="isProcessRoundDisabled"
             (click)="processRound()">
             @if (isProcessing) {
               <span class="spinner-border spinner-border-sm me-2" role="status"></span>
               Processing...
             } @else {
-              <i class="fas fa-forward-step me-2"></i>
-              Process Round
+              <i class="fas fa-forward-step me-2" aria-hidden="true"></i>
+              {{ processRoundLabel }}
             }
           </button>
         }
       </div>
     </div>
 
+    <!-- What changed: the processed Round for assistive technology, and the closing line once Complete -->
+    <p class="visually-hidden" aria-live="polite">{{ announcement }}</p>
+    @if (completeLine) {
+      <p class="fw-semibold text-success-emphasis complete-line">
+        <i class="fas fa-trophy trophy me-2" aria-hidden="true"></i>{{ completeLine }}
+      </p>
+    }
+
     <!-- Round chips: played Rounds can be reopened, the ones still to come are disabled -->
     <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-      <span class="text-muted me-1">Rounds:</span>
+      <span class="text-muted me-1 rounds-label">Rounds:</span>
       @for (roundNumber of roundNumbers; track roundNumber) {
         <button
           type="button"
@@ -79,7 +87,7 @@
       }
     </div>
 
-    <app-round-panel [round]="currentRound" (battleSelected)="openBattle($event)"></app-round-panel>
+    <app-round-panel [round]="currentRound" [justProcessedRound]="justProcessedRound" (battleSelected)="openBattle($event)"></app-round-panel>
 
     @if (openBattleId !== null) {
       <app-battle-modal
@@ -90,23 +98,17 @@
       </app-battle-modal>
     }
 
-    <!-- Standings -->
+    <!-- Standings: the current ones, whatever Round is shown; the headers sort locally -->
     <h2 class="h4 mb-3">Standings</h2>
-    <app-sort-controls
-      [currentSortBy]="currentSortBy"
-      [currentSortDirection]="currentSortDirection"
+    <app-standings
+      [entries]="sortedStandings"
+      [sortBy]="currentSortBy"
+      [sortDirection]="currentSortDirection"
+      [isComplete]="isComplete"
       (sortChange)="onSortChange($event)">
-    </app-sort-controls>
-
-    <div class="row g-3">
-      @for (pokemon of sortedStandings; track pokemon.id) {
-        <div class="col-lg-3 col-md-4 col-sm-6">
-          <app-pokemon-card [pokemon]="pokemon" [showBattleHistory]="false"></app-pokemon-card>
-        </div>
-      }
-    </div>
+    </app-standings>
   }
 }
 
 <!-- Kept outside the page states, so a 409's toast survives the reload it triggers -->
-<app-error-toast [message]="toastMessage" (dismissed)="hideToast()"></app-error-toast>
+<app-error-toast [message]="toastMessage" [persistent]="isToastPersistent" (dismissed)="hideToast()"></app-error-toast>

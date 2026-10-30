@@ -2,11 +2,12 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { TournamentPokemon } from '../../models/tournament-pokemon.model';
 import { BattleOutcome, BattleRecord } from '../../models/battle-record.model';
+import { DialogDirective } from '../../shared/dialog.directive';
 
 @Component({
   selector: 'app-battle-history-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DialogDirective],
   templateUrl: './battle-history-modal.component.html',
   styleUrl: './battle-history-modal.component.scss'
 })

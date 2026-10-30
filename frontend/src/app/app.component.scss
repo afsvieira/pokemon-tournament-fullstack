@@ -1,6 +1,22 @@
-// Theme toggle button styles
+@use './shared/buttons' as *;
+
+// Theme toggle: pinned on wide screens; on a phone it scrolls with the page rather than covering the content
+.theme-toggle {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+@media (max-width: 575.98px) {
+  .theme-toggle {
+    position: absolute;
+  }
+}
+
+// Theme toggle button styles; not "all", so the focus ring shows at once
 .btn {
-  transition: all 0.3s ease;
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
 
 // Navigation between the two flows
@@ -8,14 +24,14 @@
   border-radius: 999px;
   color: var(--bs-secondary-color);
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, color 0.3s ease;
 
   &:hover {
     color: var(--bs-emphasis-color);
   }
 
   &.active {
-    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    background: $primary-gradient;
     color: #ffffff;
   }
 }

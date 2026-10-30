@@ -1,0 +1,75 @@
+<!-- Standings - one row per Pokémon with its Position, record and id; the headers sort -->
+<div class="card border-secondary standings-card">
+  <table class="table table-hover align-middle mb-0">
+    <thead>
+      <tr>
+        <th scope="col" class="position">
+          <span aria-hidden="true">#</span>
+          <span class="visually-hidden">Position</span>
+        </th>
+        @for (column of columns; track column.label) {
+          @if (column.field) {
+            <th scope="col" [class]="column.cellClass" [attr.aria-sort]="getAriaSort(column.field)">
+              <button type="button" class="btn btn-link sort-header" (click)="sort(column.field)">
+                @if (column.name) {
+                  <span aria-hidden="true">{{ column.label }}</span>
+                  <span class="visually-hidden">{{ column.name }}</span>
+                } @else {
+                  {{ column.label }}
+                }
+                @if (getSortIcon(column.field)) {
+                  <i class="ms-1" [ngClass]="getSortIcon(column.field)" aria-hidden="true"></i>
+                }
+              </button>
+            </th>
+          } @else {
+            <th scope="col" [class]="column.cellClass">
+              @if (column.name) {
+                <span aria-hidden="true">{{ column.label }}</span>
+                <span class="visually-hidden">{{ column.name }}</span>
+              } @else {
+                {{ column.label }}
+              }
+            </th>
+          }
+        }
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of entries; track entry.id) {
+        <tr [class.leader]="isLeader(entry)">
+          <td class="position">{{ entry.position }}</td>
+          <td>
+            <span class="pokemon-cell d-flex align-items-center">
+              <!-- A leader's trophy stands in front of the sprite, where a club crest would be -->
+              @if (isLeader(entry)) {
+                <i class="fas fa-trophy trophy" aria-hidden="true"></i>
+              }
+              @if (entry.imageUrl) {
+                <img [src]="entry.imageUrl" alt="" width="48" height="48" class="sprite" loading="lazy">
+              } @else {
+                <span class="sprite text-center" aria-hidden="true">🎴</span>
+              }
+              <span class="pokemon-name fw-semibold text-truncate" [class.text-success-emphasis]="isLeader(entry)">
+                {{ entry.name }}
+              </span>
+              <i [ngClass]="getTypeIcon(entry.type)" aria-hidden="true"></i>
+              <span class="visually-hidden">{{ entry.type | titlecase }}</span>
+            </span>
+          </td>
+          <td class="win-rate text-end fw-bold">{{ entry.winRate | number: '1.1-1' }}%</td>
+          <td class="wins text-center fw-semibold">{{ entry.wins }}</td>
+          <td class="losses text-center">{{ entry.losses }}</td>
+          <td class="ties text-center">{{ entry.ties }}</td>
+          <td class="base-xp d-none d-sm-table-cell text-end">{{ entry.baseExperience }}</td>
+          @let movement = getMovement(entry);
+          <td class="movement d-none d-sm-table-cell text-center" [ngClass]="movement.cellClass">
+            <span aria-hidden="true">{{ movement.symbol }}</span>
+            <span class="visually-hidden">{{ movement.text }}</span>
+          </td>
+          <td class="pokemon-id d-none d-sm-table-cell text-end">{{ formatId(entry) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

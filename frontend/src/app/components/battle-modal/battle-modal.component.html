@@ -1,6 +1,6 @@
 <!-- Battle Modal - one Battle of a Tournament: both Pokémon and the result -->
-<div class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (click)="handleCloseModal()">
-  <div class="modal-dialog modal-dialog-centered" (click)="$event.stopPropagation()">
+<div appDialog class="modal d-block" tabindex="-1" style="background: rgba(0,0,0,0.85); backdrop-filter: blur(4px)" (dialogClose)="handleCloseModal()">
+  <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-secondary" style="border-radius: 16px">
       <!-- Modal header with the Battle's number and close button -->
       <div class="modal-header border-secondary">
@@ -26,21 +26,21 @@
             {{ errorMessage }}
           </div>
         } @else if (battle) {
-          <!-- Both Pokémon, the winner outlined in green -->
+          <!-- Both Pokémon, the winner outlined in green and marked as in the Round panel -->
           <div class="d-flex align-items-center gap-3">
             <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon1 }"></ng-container>
             <span class="text-muted fw-semibold">vs</span>
             <ng-container *ngTemplateOutlet="fighter; context: { $implicit: battle.pokemon2 }"></ng-container>
           </div>
 
-          <div class="text-center fs-5 fw-semibold mt-3 battle-result" [ngClass]="resultClass">{{ resultLabel }}</div>
+          <div class="text-center fs-5 fw-semibold mt-3 battle-result">{{ resultLabel }}</div>
         }
       </div>
     </div>
   </div>
 </div>
 
-<!-- One side of the Battle: image, name, type and base experience -->
+<!-- One side of the Battle: image, name, type and base experience; the winner is bold, green and carries a trophy -->
 <ng-template #fighter let-pokemon>
   <div class="card flex-fill text-center p-3 fighter" [ngClass]="getFighterClass(pokemon)">
     <div class="d-flex align-items-center justify-content-center mx-auto mb-2 fighter-image">
@@ -50,9 +50,15 @@
         <span class="fs-1">🎴</span>
       }
     </div>
-    <div class="fw-bold">{{ pokemon.name }}</div>
+    @if (isWinner(pokemon)) {
+      <div class="fw-bold text-success-emphasis">
+        <i class="fas fa-trophy trophy me-1" aria-hidden="true"></i>{{ pokemon.name }}
+      </div>
+    } @else {
+      <div class="text-body-secondary">{{ pokemon.name }}</div>
+    }
     <small class="text-muted">
-      <i class="me-1" [ngClass]="getTypeIcon(pokemon.type)"></i>
+      <i class="me-1" [ngClass]="getTypeIcon(pokemon.type)" aria-hidden="true"></i>
       {{ pokemon.type | titlecase }}
     </small>
     <small class="text-muted">{{ pokemon.baseExperience }} XP</small>

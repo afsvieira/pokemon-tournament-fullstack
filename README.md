@@ -237,7 +237,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 ### Frontend Features
 - **Navigation**: Switch between the Instant Simulation (`/tournament`) and Round by Round (`/round-by-round`)
 - **Tournament History**: `/round-by-round` lists the Tournaments started since the API last started, newest first, with their local start time and Rounds played ("15/15 ✔" once Complete). Open reopens one, to review it or resume it
-- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), then press Process Round to play its 15 Rounds one at a time. Each Round lists its 8 Battles, who fought whom and who won, and the Standings cards update and sort locally. A row of Round chips reopens any played Round while the cards keep the current Standings, and clicking a Battle opens it in a modal with both Pokémon and the winner, or Tie. Reopening the page shows the last played Round; after Round 15 a Complete badge replaces the button. A Tournament the API no longer holds shows a page explaining that Tournaments live in memory until the API restarts, with links to the Tournament History and to start a new one
+- **Round by Round**: Start a Tournament and open its page (`/round-by-round/:id`), then press Process Round to play its 15 Rounds one at a time. Each Round lists its 8 Battles, who fought whom and who won: the winner's name is bold and green with a gold trophy, the loser's is muted, and a tie shows a Tie pill between two equal names. The Standings list one row per Pokémon with its Position (shared when wins, losses and ties are equal), sprite, name, type, win rate (one decimal), W, L, T, base experience (the Battles' tiebreak) and id, in Position order (most wins, then fewest losses, then name); the headers sort locally, and once the Tournament is Complete the rows on Position 1 are highlighted, a gold trophy in front of the sprite. After Process Round a Movement column shows how many Positions each Pokémon moved (▲n, ▼n or a dash); on load the page has witnessed no Round, so every row shows the dash. A row of Round chips reopens any played Round while the Standings stay current, and clicking a Battle opens it in a modal with both Pokémon, the winner marked the same way, or Tie. After each Process Round the page announces "Round N processed" to assistive technology, moves focus to the new Round's heading and pulses the Round panel once (not under reduced motion). A 429 keeps its toast until dismissed while Process Round counts the rate-limit window down ("Try again in 42 s"). Reopening the page shows the last played Round; after Round 15 a Complete badge replaces the button and one line names who leads the Standings with their record, e.g. "Complete · Alakazam leads the Standings 14–0–1". A Tournament the API no longer holds shows a page explaining that Tournaments live in memory until the API restarts, with links to the Tournament History and to start a new one
 - **Tournament Generation**: Fetch and simulate battles for 16 random Pokémon
 - **Dynamic Sorting**: Sort results by wins, losses, ties, name, or ID
 - **Battle History**: View detailed battle records for each Pokémon
@@ -246,6 +246,7 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 - **Responsive Design**: Optimized for desktop and mobile devices
 - **Error Handling**: User-friendly error messages with toast notifications
 - **Loading States**: Visual feedback during API calls
+- **Modals as dialogs**: The Battle, Battle History and Tournament Rules modals move focus in, keep Tab inside, close on Escape, lock the page behind and return focus to the control that opened them; assistive technology hears a dialog named by its title
 
 ### Backend Features
 - **Tournament Simulation**: Complete round-robin tournament (120 battles total)
@@ -262,6 +263,12 @@ Only each Pokémon's primary type (slot 1 in PokéAPI) is used.
 - **Error Handling**: Graceful error responses
 - **CORS Support**: Configured for Angular frontend
 - **API Documentation**: Swagger/OpenAPI integration
+
+### Additions beyond the assessment
+The assessment asks for none of these; they are this project's own extras:
+- The PokéAPI cache
+- The rate limits read from configuration
+- The Movement column of the Standings on the Round by Round page
 
 ## 🧪 Testing
 
@@ -299,11 +306,11 @@ npx ng test --watch=false --browsers=ChromeHeadless
 **Test Coverage:**
 - UI components: pokemon card (6), sort controls (5), battle history modal (2), rules modal (1)
 - App shell, navigation and theme toggle (5 tests)
-- Tournament page, including the rate-limit error message (3 tests)
+- Tournament page, including the rate-limit error message and the Battle History and Tournament Rules modals as dialogs (5 tests)
 - Tournament History page, through the app routes: the list and Open, the empty state, load error and Retry, Start and its error toast (5 tests)
-- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, Process Round with its errors, the Round chips, the Battle modal and a change of Tournament while loading (21 tests)
+- Round-by-round Tournament page, through the app routes: Standings, sorting, load error and Retry, the "no longer exists" page with its two actions, Process Round with its errors, the winner marking in the Battle rows, the Standings with Position, Movement, header sorting and the Complete highlight, the Round chips, the Battle modal and its dialog behaviour, the announcement and focus after Process Round, the Complete line, the 429 wait, and a change of Tournament while loading (32 tests)
 - Tournament service HTTP communication (2 tests)
-- **Total: 50 tests**
+- **Total: 63 tests**
 
 ## 🛠️ Development
 
@@ -396,7 +403,7 @@ The API only accepts cross-origin requests from `http://localhost:4200`. If the 
 - **500 Internal Server Error**: Unexpected errors, including PokéAPI being unavailable for a Pokémon not yet cached
 
 ### Frontend Errors
-- **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429`
+- **Connection Errors**: Toast notifications (auto-hidden after 5 seconds) with a message based on the HTTP status, including a rate-limit message for `429` ("Too many requests. Please wait a minute and try again."). On the Round by Round page a `429` toast stays until dismissed and Process Round waits out the rate-limit window, counting the seconds down in its label ("Try again in 42 s"); the toast follows the theme
 - **Round by Round**: a failed Start shows a toast with the API's `error` message, or one based on the status; a failed Process Round or Round chip shows a toast and leaves the page as it was; a Battle that fails to load shows the message inside its modal; a Tournament History or Tournament page that fails to load shows the message inline with a Retry button. Any `404` on the Tournament page shows that the Tournament no longer exists, and a `409` on Process Round (another tab completed the Tournament) reloads the page before showing the API's message
 - **Loading States**: Spinners and disabled buttons
 

@@ -6,13 +6,14 @@ import { Battle } from '../../models/battle.model';
 import { BattlePokemon } from '../../models/battle-pokemon.model';
 import { getTypeIconClass } from '../../models/icons.mapping';
 import { RoundByRoundService } from '../../services/round-by-round.service';
-import { getBattleResultClass, getBattleResultLabel } from '../../shared/battle-result';
+import { getBattleResultLabel, isBattleWinner } from '../../shared/battle-result';
 import { getErrorMessage } from '../../shared/error-message';
+import { DialogDirective } from '../../shared/dialog.directive';
 
 @Component({
   selector: 'app-battle-modal',
   standalone: true,
-  imports: [NgClass, NgTemplateOutlet, TitleCasePipe],
+  imports: [NgClass, NgTemplateOutlet, TitleCasePipe, DialogDirective],
   templateUrl: './battle-modal.component.html',
   styleUrl: './battle-modal.component.scss'
 })
@@ -62,17 +63,17 @@ export class BattleModalComponent implements OnInit {
   }
 
   /**
-   * Colours a win green and a tie grey
+   * Whether this Pokémon won the Battle, so its card is outlined in green and its name marked as in the Round panel
    */
-  get resultClass(): string {
-    return this.battle ? getBattleResultClass(this.battle) : '';
+  isWinner(pokemon: BattlePokemon): boolean {
+    return this.battle !== null && isBattleWinner(this.battle, pokemon);
   }
 
   /**
    * Outlines the winner's side in green, and both sides in grey on a tie
    */
   getFighterClass(pokemon: BattlePokemon): string {
-    return this.battle?.winnerId === pokemon.id ? 'border-success' : 'border-secondary';
+    return this.isWinner(pokemon) ? 'border-success' : 'border-secondary';
   }
 
   getTypeIcon(type: string): string {

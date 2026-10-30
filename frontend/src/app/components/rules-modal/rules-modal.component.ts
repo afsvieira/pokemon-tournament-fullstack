@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Icons } from '../../models/icons.mapping';
+import { DialogDirective } from '../../shared/dialog.directive';
 
 @Component({
   selector: 'app-rules-modal',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, DialogDirective],
   templateUrl: './rules-modal.component.html',
   styleUrl: './rules-modal.component.scss'
 })
