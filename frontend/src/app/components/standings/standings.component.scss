@@ -89,14 +89,20 @@ tr.leader > td {
 // Below the small breakpoint the id column is gone and the cells tighten, so the name keeps most of the width
 @media (max-width: 575.98px) {
   .standings-card .table > :not(caption) > * > * {
-    padding: 0.5rem 0.35rem;
+    padding: 0.5rem 0.3rem;
   }
 
   .record,
   .wins,
   .losses,
   .ties {
-    width: 1.75rem;
+    width: 2rem;
+    white-space: nowrap;
+  }
+
+  // Names a step smaller, so a ten-letter name still fits whole beside the sprite and the type icon
+  .pokemon-name {
+    font-size: 0.9375rem;
   }
 
   // The numbers shrink a step and the win rate's header wraps, so the name keeps most of the row
